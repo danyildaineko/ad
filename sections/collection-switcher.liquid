@@ -1,0 +1,40 @@
+{% schema %}
+{
+  "name": "Collection switcher",
+  "tag": "section",
+  "class": "collection-switcher-section",
+  "settings": [],
+  "presets": [{ "name": "Collection switcher" }]
+}
+{% endschema %}
+
+
+{% comment %} Collection tabs {% endcomment %}
+{% assign menu = menus['collection-switcher'] | default: linklists['collection-switcher'] %}
+
+{% if menu and menu.links.size > 0 %}
+  <nav class="collection-switcher" role="tablist" aria-label="Collection switcher">
+    {% for l in menu.links %}
+      {% assign is_active = false %}
+      {% if request.path == l.url or request.url == l.url %}
+        {% assign is_active = true %}
+      {% endif %}
+      <a href="{{ l.url }}"
+         class="switch-btn{% if is_active %} is-active{% endif %}"
+         role="tab" aria-selected="{{ is_active }}">
+        {{ l.title }}
+      </a>
+    {% endfor %}
+  </nav>
+  <div class="collection-switcher__mobile">
+    <label for="coll-select-{{ section.id }}" class="visually-hidden">Collections</label>
+    <select id="coll-select-{{ section.id }}" onchange="if(this.value) location.href=this.value">
+      {% for l in menu.links %}
+        <option value="{{ l.url }}" {% if request.path == l.url %}selected{% endif %}>{{ l.title }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+{% else %}
+  <div class="collection-switcher notice">Add links in Navigation → “collection-switcher”.</div>
+{% endif %}
