@@ -34,18 +34,32 @@ Supported variables
 {% endif %}
 
 <!-- DEBUG INFO (remove after testing) -->
-<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 11px;">
+<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 11px; max-height: 400px; overflow: auto;">
   <strong>DEBUG:</strong><br>
   has_featured: {{ has_featured }}<br>
   featured_variants.size: {{ featured_variants.size }}<br>
-  featured_ids: {{ featured_ids | join: ', ' }}<br>
+  featured_ids: [{{ featured_ids | join: ', ' }}]<br>
   featured_ids.size: {{ featured_ids.size }}<br>
-  allowed_sizes: {{ allowed_sizes | join: ', ' }}<br>
+  <br>
+  <strong>allowed_sizes array:</strong><br>
   allowed_sizes.size: {{ allowed_sizes.size }}<br>
+  {% for size in allowed_sizes %}
+    [{{ forloop.index }}] = "{{ size }}" (length: {{ size | size }})<br>
+  {% endfor %}
   <br>
   <strong>Featured variants details:</strong><br>
   {% for variant in featured_variants %}
-    - ID: {{ variant.id }}, option1: "{{ variant.option1 }}", title: "{{ variant.title }}"<br>
+    - ID: {{ variant.id }}<br>
+    &nbsp;&nbsp;option1: "{{ variant.option1 }}" (length: {{ variant.option1 | size }})<br>
+    &nbsp;&nbsp;title: "{{ variant.title }}"<br>
+  {% endfor %}
+  <br>
+  <strong>All option values from product:</strong><br>
+  {% for option in product.options_with_values %}
+    Option {{ option.position }} ({{ option.name }}):<br>
+    {% for value in option.values %}
+      &nbsp;&nbsp;[{{ forloop.index }}] "{{ value }}" (length: {{ value | size }})<br>
+    {% endfor %}
   {% endfor %}
 </div>
 <!-- END DEBUG -->
