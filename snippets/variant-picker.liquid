@@ -23,8 +23,21 @@ Supported variables
 {%- assign size_label_list = 'general.label.size' | t | replace: ', ', ',' | downcase | split: ',' -%}
 {%- assign variant_image_options = variant_image_options | replace: ', ', ',' | downcase | split: ',' -%}
 
-{%- comment -%}Get featured variant IDs from metafield{%- endcomment -%}
-{%- assign featured_ids = product.metafields.custom.featured_variants.references | map: 'id' -%}
+{% comment %} Featured variants helpers {% endcomment %}
+{% assign _featured_refs = product.metafields.custom.featured_variants.references %}
+{% assign _featured_ids  = _featured_refs | map: 'id' %}
+{% assign _has_featured  = false %}
+{% if _featured_ids.size > 0 %}{% assign _has_featured = true %}{% endif %}
+
+{% assign _featured_variants = '' | split: ',' %}
+{% if _has_featured %}
+  {% for v in product.variants %}
+    {% if _featured_ids contains v.id %}{% assign _featured_variants = _featured_variants | push: v %}{% endif %}
+  {% endfor %}
+  {% assign _allowed_opt1 = _featured_variants | map: 'option1' | uniq %}
+  {% assign _allowed_opt2 = _featured_variants | map: 'option2' | uniq %}
+  {% assign _allowed_opt3 = _featured_variants | map: 'option3' | uniq %}
+{% endif %}
 
 {%- unless product.has_only_default_variant or hide_sold_out_variants and product.available == false -%}
   <variant-picker class="variant-picker v-stack gap-4" handle="{{ product.handle }}" form="{{ form_id }}" {% if update_url %}update-url{% endif %} {% if hide_sold_out_variants %}hide-sold-out-variants{% endif %}>
@@ -101,12 +114,17 @@ Supported variables
                 <input type="hidden" id="{{ popover_id }}-input" name="option{{ option.position }}" form="{{ form_id }}" value="{{ option.selected_value | escape }}">
 
                 {%- for value in option.values -%}
-                  {%- if featured_ids.size == 0 or featured_ids contains value.variant.id -%}
-                    <button type="button" class="h-stack justify-between gap-2" role="option" value="{{ value | escape }}" title="{{ value | escape }}" aria-selected="{% if value == option.selected_value %}true{% else %}false{% endif %}" data-option-value>
-                      <span>{{- value -}}</span>
-                      <span class="variant-picker__dropdown-sold-out-label">{{- 'product.general.sold_out_badge' | t -}}</span>
-                    </button>
+                  {%- if _has_featured -%}
+                    {%- case option.position -%}
+                      {%- when 1 -%}{% unless _allowed_opt1 contains value %}{% continue %}{% endunless %}
+                      {%- when 2 -%}{% unless _allowed_opt2 contains value %}{% continue %}{% endunless %}
+                      {%- when 3 -%}{% unless _allowed_opt3 contains value %}{% continue %}{% endunless %}
+                    {%- endcase -%}
                   {%- endif -%}
+                  <button type="button" class="h-stack justify-between gap-2" role="option" value="{{ value | escape }}" title="{{ value | escape }}" aria-selected="{% if value == option.selected_value %}true{% else %}false{% endif %}" data-option-value>
+                    <span>{{- value -}}</span>
+                    <span class="variant-picker__dropdown-sold-out-label">{{- 'product.general.sold_out_badge' | t -}}</span>
+                  </button>
                 {%- endfor -%}
               </x-listbox>
             </x-popover>
@@ -127,39 +145,54 @@ Supported variables
               assign name = 'option' | append: option.position
 
               for value in option.values
-                # Only show featured variants if metafield is set
-                if featured_ids.size == 0 or featured_ids contains value.variant.id
-                  assign selected = false
-
-                  if value == option.selected_value
-                    assign selected = true
-                  endif
-
-                  case resolved_option_selector_style
-                    when 'variant_image'
-                      render 'option-value', type: 'thumbnail', value: value, image: value.variant.featured_media, selected: selected, name: name, form: form_id, id_prefix: forloop.index
-                    when 'swatch'
-                      if value.swatch.image
-                        render 'option-value', type: 'swatch', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, id_prefix: forloop.index
-                      elsif value.swatch.color
-                        render 'option-value', type: 'swatch', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, id_prefix: forloop.index
-                      else
-                        # Use the configuration based approach for compatibility reason
-                        render 'option-value', type: 'swatch', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index
-                      endif
-                    when 'block'
-                      render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index
-                    when 'block_swatch'
-                      if value.swatch.image
-                        render 'option-value', type: 'block', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
-                      elsif value.swatch.color
-                        render 'option-value', type: 'block', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
-                      else
-                        # Use the configuration based approach for compatibility reason
-                        render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
-                      endif
+                # Filter by featured variants if metafield is set
+                if _has_featured
+                  case option.position
+                    when 1
+                      unless _allowed_opt1 contains value
+                        continue
+                      endunless
+                    when 2
+                      unless _allowed_opt2 contains value
+                        continue
+                      endunless
+                    when 3
+                      unless _allowed_opt3 contains value
+                        continue
+                      endunless
                   endcase
                 endif
+
+                assign selected = false
+
+                if value == option.selected_value
+                  assign selected = true
+                endif
+
+                case resolved_option_selector_style
+                  when 'variant_image'
+                    render 'option-value', type: 'thumbnail', value: value, image: value.variant.featured_media, selected: selected, name: name, form: form_id, id_prefix: forloop.index
+                  when 'swatch'
+                    if value.swatch.image
+                      render 'option-value', type: 'swatch', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, id_prefix: forloop.index
+                    elsif value.swatch.color
+                      render 'option-value', type: 'swatch', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, id_prefix: forloop.index
+                    else
+                      # Use the configuration based approach for compatibility reason
+                      render 'option-value', type: 'swatch', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index
+                    endif
+                  when 'block'
+                    render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index
+                  when 'block_swatch'
+                    if value.swatch.image
+                      render 'option-value', type: 'block', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
+                    elsif value.swatch.color
+                      render 'option-value', type: 'block', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
+                    else
+                      # Use the configuration based approach for compatibility reason
+                      render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
+                    endif
+                endcase
               endfor
             %}
           </div>
@@ -184,14 +217,11 @@ Supported variables
       {%- assign input_label = 'product.general.variant' | t -%}
 
       {%- capture select_options -%}
-      {%- assign featured_ids = product.metafields.custom.featured_variants.value | map: 'id' -%}
-
-      {% assign featured_ids = product.metafields.custom.featured_variants.references | map: 'id' %}
-      {% assign current      = product.metafields.custom.featured_variants.references | first
-                          | default: product.selected_or_first_available_variant %}
+        {% assign current = product.metafields.custom.featured_variants.references | first
+                            | default: product.selected_or_first_available_variant %}
 
         {% for variant in product.variants %}
-          {% if featured_ids contains variant.id %}
+          {% if _has_featured == false or _featured_ids contains variant.id %}
             <option
               {% if variant.id == current.id %}selected{% endif %}
               {% unless variant.available %}disabled{% endunless %}
@@ -200,7 +230,6 @@ Supported variables
             </option>
           {% endif %}
         {% endfor %}
-
       {%- endcapture -%}
 
       {%- render 'select', label: input_label, form: form_id, name: 'id', options: select_options -%}
