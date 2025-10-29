@@ -30,9 +30,7 @@ Supported variables
 {% if featured_ids.size > 0 %}{% assign has_featured = true %}{% endif %}
 
 {% if has_featured %}
-  {% assign allowed_opt1 = featured_refs | map: 'option1' | uniq %}
-  {% assign allowed_opt2 = featured_refs | map: 'option2' | uniq %}
-  {% assign allowed_opt3 = featured_refs | map: 'option3' | uniq %}
+  {% assign allowed_sizes = featured_refs | map: 'option1' | uniq %}
 {% endif %}
 
 {%- unless product.has_only_default_variant or hide_sold_out_variants and product.available == false -%}
@@ -111,11 +109,16 @@ Supported variables
 
                 {%- for value in option.values -%}
                   {%- if has_featured -%}
-                    {%- case option.position -%}
-                      {%- when 1 -%}{% unless allowed_opt1 contains value %}{% continue %}{% endunless %}
-                      {%- when 2 -%}{% unless allowed_opt2 contains value %}{% continue %}{% endunless %}
-                      {%- when 3 -%}{% unless allowed_opt3 contains value %}{% continue %}{% endunless %}
-                    {%- endcase -%}
+                    {%- assign value_string = value | downcase -%}
+                    {%- assign value_in_list = false -%}
+                    {%- for allowed_size in allowed_sizes -%}
+                      {%- assign allowed_size_lower = allowed_size | downcase -%}
+                      {%- if value_string == allowed_size_lower -%}
+                        {%- assign value_in_list = true -%}
+                        {%- break -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+                    {%- unless value_in_list -%}{% continue %}{%- endunless -%}
                   {%- endif -%}
                   <button type="button" class="h-stack justify-between gap-2" role="option" value="{{ value | escape }}" title="{{ value | escape }}" aria-selected="{% if value == option.selected_value %}true{% else %}false{% endif %}" data-option-value>
                     <span>{{- value -}}</span>
@@ -143,20 +146,18 @@ Supported variables
               for value in option.values
                 # Filter by featured variants if metafield is set
                 if has_featured
-                  case option.position
-                    when 1
-                      unless allowed_opt1 contains value
-                        continue
-                      endunless
-                    when 2
-                      unless allowed_opt2 contains value
-                        continue
-                      endunless
-                    when 3
-                      unless allowed_opt3 contains value
-                        continue
-                      endunless
-                  endcase
+                  assign value_string = value | downcase
+                  assign value_in_list = false
+                  for allowed_size in allowed_sizes
+                    assign allowed_size_lower = allowed_size | downcase
+                    if value_string == allowed_size_lower
+                      assign value_in_list = true
+                      break
+                    endif
+                  endfor
+                  unless value_in_list
+                    continue
+                  endunless
                 endif
 
                 assign selected = false
