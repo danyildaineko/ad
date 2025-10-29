@@ -33,6 +33,17 @@ Supported variables
   {% assign allowed_sizes = featured_refs | map: 'option1' | uniq %}
 {% endif %}
 
+<!-- DEBUG INFO (remove after testing) -->
+<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 11px;">
+  <strong>DEBUG:</strong><br>
+  has_featured: {{ has_featured }}<br>
+  featured_refs.size: {{ featured_refs.size }}<br>
+  featured_ids.size: {{ featured_ids.size }}<br>
+  allowed_sizes: {{ allowed_sizes | join: ', ' }}<br>
+  allowed_sizes.size: {{ allowed_sizes.size }}
+</div>
+<!-- END DEBUG -->
+
 {%- unless product.has_only_default_variant or hide_sold_out_variants and product.available == false -%}
   <variant-picker class="variant-picker v-stack gap-4" handle="{{ product.handle }}" form="{{ form_id }}" {% if update_url %}update-url{% endif %} {% if hide_sold_out_variants %}hide-sold-out-variants{% endif %}>
     {%- for option in product.options_with_values -%}
@@ -140,6 +151,7 @@ Supported variables
           -%}
 
           <div data-option-selector class="variant-picker__option-values {{ list_classes }}">
+            <!-- DEBUG: Showing option position {{ option.position }}, has_featured: {{ has_featured }} -->
             {% liquid
               assign name = 'option' | append: option.position
 
@@ -165,6 +177,10 @@ Supported variables
                 if value == option.selected_value
                   assign selected = true
                 endif
+
+                echo '<div style="font-size:9px;color:red;">Showing: '
+                echo value
+                echo '</div>'
 
                 case resolved_option_selector_style
                   when 'variant_image'
