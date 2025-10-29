@@ -23,6 +23,9 @@ Supported variables
 {%- assign size_label_list = 'general.label.size' | t | replace: ', ', ',' | downcase | split: ',' -%}
 {%- assign variant_image_options = variant_image_options | replace: ', ', ',' | downcase | split: ',' -%}
 
+{%- comment -%}Get featured variant IDs from metafield{%- endcomment -%}
+{%- assign featured_ids = product.metafields.custom.featured_variants.references | map: 'id' -%}
+
 {%- unless product.has_only_default_variant or hide_sold_out_variants and product.available == false -%}
   <variant-picker class="variant-picker v-stack gap-4" handle="{{ product.handle }}" form="{{ form_id }}" {% if update_url %}update-url{% endif %} {% if hide_sold_out_variants %}hide-sold-out-variants{% endif %}>
     {%- for option in product.options_with_values -%}
@@ -98,10 +101,12 @@ Supported variables
                 <input type="hidden" id="{{ popover_id }}-input" name="option{{ option.position }}" form="{{ form_id }}" value="{{ option.selected_value | escape }}">
 
                 {%- for value in option.values -%}
-                  <button type="button" class="h-stack justify-between gap-2" role="option" value="{{ value | escape }}" title="{{ value | escape }}" aria-selected="{% if value == option.selected_value %}true{% else %}false{% endif %}" data-option-value>
-                    <span>{{- value -}}</span>
-                    <span class="variant-picker__dropdown-sold-out-label">{{- 'product.general.sold_out_badge' | t -}}</span>
-                  </button>
+                  {%- if featured_ids.size == 0 or featured_ids contains value.variant.id -%}
+                    <button type="button" class="h-stack justify-between gap-2" role="option" value="{{ value | escape }}" title="{{ value | escape }}" aria-selected="{% if value == option.selected_value %}true{% else %}false{% endif %}" data-option-value>
+                      <span>{{- value -}}</span>
+                      <span class="variant-picker__dropdown-sold-out-label">{{- 'product.general.sold_out_badge' | t -}}</span>
+                    </button>
+                  {%- endif -%}
                 {%- endfor -%}
               </x-listbox>
             </x-popover>
@@ -122,36 +127,39 @@ Supported variables
               assign name = 'option' | append: option.position
 
               for value in option.values
-                assign selected = false
+                # Only show featured variants if metafield is set
+                if featured_ids.size == 0 or featured_ids contains value.variant.id
+                  assign selected = false
 
-                if value == option.selected_value
-                  assign selected = true
+                  if value == option.selected_value
+                    assign selected = true
+                  endif
+
+                  case resolved_option_selector_style
+                    when 'variant_image'
+                      render 'option-value', type: 'thumbnail', value: value, image: value.variant.featured_media, selected: selected, name: name, form: form_id, id_prefix: forloop.index
+                    when 'swatch'
+                      if value.swatch.image
+                        render 'option-value', type: 'swatch', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, id_prefix: forloop.index
+                      elsif value.swatch.color
+                        render 'option-value', type: 'swatch', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, id_prefix: forloop.index
+                      else
+                        # Use the configuration based approach for compatibility reason
+                        render 'option-value', type: 'swatch', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index
+                      endif
+                    when 'block'
+                      render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index
+                    when 'block_swatch'
+                      if value.swatch.image
+                        render 'option-value', type: 'block', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
+                      elsif value.swatch.color
+                        render 'option-value', type: 'block', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
+                      else
+                        # Use the configuration based approach for compatibility reason
+                        render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
+                      endif
+                  endcase
                 endif
-
-                case resolved_option_selector_style
-                  when 'variant_image'
-                    render 'option-value', type: 'thumbnail', value: value, image: value.variant.featured_media, selected: selected, name: name, form: form_id, id_prefix: forloop.index
-                  when 'swatch'
-                    if value.swatch.image
-                      render 'option-value', type: 'swatch', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, id_prefix: forloop.index
-                    elsif value.swatch.color
-                      render 'option-value', type: 'swatch', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, id_prefix: forloop.index
-                    else
-                      # Use the configuration based approach for compatibility reason
-                      render 'option-value', type: 'swatch', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index
-                    endif
-                  when 'block'
-                    render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index
-                  when 'block_swatch'
-                    if value.swatch.image
-                      render 'option-value', type: 'block', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
-                    elsif value.swatch.color
-                      render 'option-value', type: 'block', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
-                    else
-                      # Use the configuration based approach for compatibility reason
-                      render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index
-                    endif
-                endcase
               endfor
             %}
           </div>
