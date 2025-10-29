@@ -7,8 +7,8 @@ PRODUCT INFO - with disclaimer at the bottom
 {%- capture product_form_id -%}product-form-{{ product.id }}-{{ section.id }}{%- endcapture -%}
 
 {% comment %} Use first featured variant as current, fallback to default {% endcomment %}
-{% assign _current = product.metafields.custom.featured_variants.references | first
-                     | default: product.selected_or_first_available_variant %}
+{% assign current_variant = product.metafields.custom.featured_variants.references | first
+                            | default: product.selected_or_first_available_variant %}
 
 <safe-sticky class="product-info {% if center_basic_info %}product-info--center{% endif %}">
   <div class="product-info__block-list">
@@ -134,18 +134,18 @@ PRODUCT INFO - with disclaimer at the bottom
             {%- endif -%}
 
           {%- when 'sku' -%}
-            <variant-sku class="variant-sku text-sm text-subdued" form="{{ product_form_id }}" {% if product != blank and _current.sku == blank %}hidden{% endif %}>
-              {{- 'product.general.sku' | t }} {% if product != blank -%}{{ _current.sku -}}{%- else -%}SK-123AB{%- endif -%}
+            <variant-sku class="variant-sku text-sm text-subdued" form="{{ product_form_id }}" {% if product != blank and current_variant.sku == blank %}hidden{% endif %}>
+              {{- 'product.general.sku' | t }} {% if product != blank -%}{{ current_variant.sku -}}{%- else -%}SK-123AB{%- endif -%}
             </variant-sku>
 
           {%- when 'badges' -%}
             {%- if product != blank -%}
-              {%- render 'product-badges', product: product, variant: _current, types: 'custom,discount', form_id: product_form_id -%}
+              {%- render 'product-badges', product: product, variant: current_variant, types: 'custom,discount', form_id: product_form_id -%}
             {%- endif -%}
 
 {%- when 'price' -%}
   <div class="v-stack">
-    {%- render 'price-list', product: product, variant: _current, context: 'product', form_id: product_form_id -%}
+    {%- render 'price-list', product: product, variant: current_variant, context: 'product', form_id: product_form_id -%}
 
     {%- if block.settings.show_taxes_notice -%}
       <p class="text-sm text-subdued">
@@ -168,7 +168,7 @@ PRODUCT INFO - with disclaimer at the bottom
               <payment-terms class="payment-terms" form="{{ product_form_id }}">
                 {%- capture product_installment_form_id -%}product-installment-form-{{ section.id }}-{{ product.id }}{%- endcapture -%}
                 
-                {% assign current = _current %}
+                {% assign current = current_variant %}
 
 
                 {% form 'product', product, variant: current, id: product_installment_form_id %}
@@ -301,7 +301,7 @@ PRODUCT INFO - with disclaimer at the bottom
 
           {%- when 'quantity_selector' -%}
             {%- if product.available -%}
-              {% render 'quantity-selector', variant: _current, form: product_form_id %}
+              {% render 'quantity-selector', variant: current_variant, form: product_form_id %}
             {%- endif -%}
 
           {%- when 'inventory' -%}
@@ -328,7 +328,7 @@ PRODUCT INFO - with disclaimer at the bottom
 
           {%- when 'pickup_availability' -%}
             {%- if product != blank -%}
-              {%- render 'pickup-availability', product_variant: _current, form_id: product_form_id -%}
+              {%- render 'pickup-availability', product_variant: current_variant, form_id: product_form_id -%}
             {%- endif -%}
 
           {%- when 'offers' -%}
@@ -521,7 +521,7 @@ PRODUCT INFO - with disclaimer at the bottom
 
   {%- unless buy_buttons_block != blank or product == blank -%}
     {%- form 'product', product, id: product_form_id, hidden: true -%}
-      <input type="hidden" disabled name="id" value="{{ _current.id }}">
+      <input type="hidden" disabled name="id" value="{{ current_variant.id }}">
     {%- endform -%}
   {%- endunless -%}
 </safe-sticky>
