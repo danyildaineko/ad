@@ -1,0 +1,117 @@
+{% assign _id = id | default: page_handle %}
+<div id="{{ _id }}-modal" class="sg-modal" aria-hidden="true">
+  <div class="sg-backdrop" data-sg-close></div>
+  <div class="sg-dialog" role="dialog" aria-modal="true">
+    <button class="sg-close" type="button" aria-label="Close" data-sg-close>&times;</button>
+    <div class="sg-content">
+      {{ pages[page_handle].content }}
+    </div>
+  </div>
+</div>
+
+<style>
+.sg-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 9999; /* достаточно, чтобы быть поверх контента, но ниже хедера */
+}
+.sg-modal.is-open { display: block; }
+
+.sg-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 1; /* фон */
+}
+
+.sg-dialog {
+  position: relative;
+  max-width: 960px;
+  margin: 6vh auto;      /* отступ сверху/снизу */
+  background: #fff;
+  border-radius: 12px;
+  padding: 40px 32px;    /* внутренние отступы */
+  max-height: 85vh;
+  overflow: auto;
+  box-shadow: 0 12px 40px rgba(0,0,0,.25);
+  z-index: 2; /* поверх backdrop, но под хедером */
+}
+
+.sg-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 28px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.sg-content { line-height: 1.6; }
+.sg-content h1,
+.sg-content h2,
+.sg-content h3 { margin-top: 1.5em; margin-bottom: .75em; font-weight: 600; }
+.sg-content p { margin: 1em 0; }
+.sg-content ul, .sg-content ol { margin: 1em 0 1em 1.5em; }
+.sg-content table { width: 100%; border-collapse: collapse; margin: 1.5em 0; }
+.sg-content th, .sg-content td { border: 1px solid #eee; padding: 10px; text-align: left; }
+.sg-content img { max-width: 100%; height: auto; margin: 1em 0; }
+
+/* Чтобы хедер не пропадал */
+header, .site-header {
+  position: relative;
+  z-index: 10000; /* выше чем модалка */
+}
+
+</style>
+
+<script>
+(function(){
+  const id = '{{ _id | default: page_handle }}-modal';
+  const modal = document.getElementById(id);
+
+  // перенесемо в body на всякий
+  if(modal && modal.parentElement !== document.body){ document.body.appendChild(modal); }
+
+  const K='__sgOpenCount';
+  if(typeof document.documentElement[K] !== 'number'){ document.documentElement[K]=0; }
+
+  function lock(){ if(document.documentElement[K]++ === 0){ 
+    document.documentElement.classList.add('sg-locked'); 
+    document.body.classList.add('sg-locked'); 
+  }}
+
+  function unlock(){
+    document.documentElement[K] = Math.max(0, document.documentElement[K]-1);
+    if(document.documentElement[K] === 0){
+      document.documentElement.classList.remove('sg-locked');
+      document.body.classList.remove('sg-locked','overflow-hidden','modal-open');
+    }
+  }
+
+  function closeHard(){
+    modal.classList.remove('is-open');
+    // повний ресет на випадок ESC
+    document.documentElement[K]=0;
+    document.documentElement.classList.remove('sg-locked');
+    document.body.classList.remove('sg-locked','overflow-hidden','modal-open');
+  }
+
+  document.addEventListener('click', (e)=>{
+    if(e.target.closest(`[data-sg-open="${id}"]`)){ e.preventDefault(); modal.classList.add('is-open'); lock(); }
+    if(e.target.classList.contains('sg-backdrop') || e.target.closest('[data-sg-close]')){ e.preventDefault(); modal.classList.remove('is-open'); unlock(); }
+  });
+
+  // ESC — завжди повний ресет лока
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && modal.classList.contains('is-open')){ e.preventDefault(); closeHard(); }
+  });
+
+  // додатковий безпековий гачок (якщо вкладка ховалась)
+  document.addEventListener('visibilitychange', ()=>{ 
+    if(document.visibilityState === 'hidden') closeHard(); 
+  });
+})();
+</script>
+

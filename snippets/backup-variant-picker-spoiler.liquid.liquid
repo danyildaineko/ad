@@ -1,0 +1,323 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+VARIANT PICKER WITH SIZE SPOILER
+----------------------------------------------------------------------------------------------------------------------
+{%- endcomment -%}
+
+{%- if product.has_only_default_variant == false -%}
+  {%- liquid
+    assign url_params = request.url | split: '?' | last
+    assign has_variant_param = false
+    
+    if url_params contains 'variant='
+      assign has_variant_param = true
+      assign current_variant_id = product.selected_or_first_available_variant.id
+      assign first_variant_id = product.variants.first.id
+      
+      if current_variant_id != first_variant_id
+        assign redirect_url = product.url | append: '?variant=' | append: first_variant_id
+        echo '<meta http-equiv="refresh" content="0;url=' | append: redirect_url | append: '">'
+      endif
+    endif
+  -%}
+{%- endif -%}
+
+{%- assign color_label_list = 'general.label.color' | t | replace: ', ', ',' | downcase | split: ',' -%}
+{%- assign size_label_list = 'general.label.size' | t | replace: ', ', ',' | downcase | split: ',' -%}
+{%- assign variant_image_options = variant_image_options | replace: ', ', ',' | downcase | split: ',' -%}
+
+<style>
+  .variant-picker__option[data-size-option] .block-swatch {
+    min-width: 127px;
+  }
+</style>
+
+{%- unless product.has_only_default_variant or hide_sold_out_variants and product.available == false -%}
+  <variant-picker class="variant-picker v-stack gap-4" handle="{{ product.handle }}" form="{{ form_id }}" {% if update_url %}update-url{% endif %} {% if hide_sold_out_variants %}hide-sold-out-variants{% endif %}>
+    {%- for option in product.options_with_values -%}
+      {% liquid
+        assign option_downcase = option.name | downcase
+        assign resolved_option_selector_style = selector_style
+
+        assign swatch_count = option.values | map: 'swatch' | compact | size
+
+        if swatch_count > 0 and swatch_selector_style != 'none'
+          assign resolved_option_selector_style = swatch_selector_style
+        endif
+
+        if swatch_count == 0 and color_label_list contains option_downcase and swatch_selector_style != 'none'
+          assign resolved_option_selector_style = swatch_selector_style
+        endif
+
+        if variant_image_options contains option_downcase
+          assign resolved_option_selector_style = 'variant_image'
+        endif
+        
+        if option.name == 'Opening style'
+          assign resolved_option_selector_style = 'swatch'
+        endif
+        
+        assign is_size_option = false
+        assign has_many_sizes = false
+        if size_label_list contains option_downcase or option.name == 'Size'
+          assign is_size_option = true
+          if option.values.size > 6
+            assign has_many_sizes = true
+          endif
+        endif
+      %}
+
+      <fieldset class="variant-picker__option v-stack gap-2 no-js:hidden" {% if is_size_option %}data-size-option{% endif %}>
+        <div class="variant-picker__option-info h-stack justify-between gap-2">
+          <div class="h-stack gap-1">
+            <legend>{{ option.name }}</legend>
+
+            {%- if resolved_option_selector_style == 'swatch' or resolved_option_selector_style == 'variant_image' -%}
+              <variant-option-value form="{{ form_id }}" for="option{{ option.position }}">{{ option.selected_value }}</variant-option-value>
+            {%- endif -%}
+          </div>
+
+          {%- if size_chart_page != blank and size_label_list contains option_downcase -%}
+            {%- capture id -%}size-chart-{{ section.id }}-option-{{ option.position }}{%- endcapture -%}
+
+            <button type="button" class="link size_chart link-faded" aria-controls="{{ id | escape }}" aria-expanded="false">
+              {{- 'product.general.size_chart' | t -}} <img src="https://cdn.shopify.com/s/files/1/0633/0558/0744/files/info-icon.svg?v=1743469340" alt="Info Icon" width="24" height="24">
+            </button>
+
+            <x-modal id="{{ id | escape }}" class="modal modal--lg color-scheme color-scheme--dialog">
+              <span class="h5" slot="header">{{ size_chart_page.title }}</span>
+
+              <div class="prose">
+                {{- size_chart_page.content -}}
+              </div>
+            </x-modal>
+          {%- endif -%}
+        </div>
+      
+        {%- assign name = 'option' | append: option.position -%}
+
+        {%- if is_size_option and has_many_sizes and resolved_option_selector_style != 'dropdown' -%}
+          
+          {%- liquid
+            case resolved_option_selector_style
+              when 'swatch' or 'variant_image' or 'block' or 'block_swatch'
+                assign list_classes = 'h-stack gap-4 wrap'
+              else
+                assign list_classes = ''
+            endcase
+          -%}
+          
+          {%- comment -%} All sizes in one container {%- endcomment -%}
+          <div data-option-selector class="variant-picker__option-values {{ list_classes }}" id="size-container-{{ section.id }}-{{ option.position }}">
+            {% for value in option.values %}
+              {% assign selected = false %}
+              {% if is_size_option and forloop.first %}
+                {% assign selected = true %}
+              {% elsif value == option.selected_value and is_size_option == false %}
+                {% assign selected = true %}
+              {% endif %}
+              
+              <div class="{% if forloop.index <= 6 %}size-visible-item{% else %}size-hidden-item{% endif %}" {% if forloop.index > 6 %}style="display: none;"{% endif %}>
+                {% case resolved_option_selector_style %}
+                  {% when 'variant_image' %}
+                    {% render 'option-value', type: 'thumbnail', value: value, image: value.variant.featured_media, selected: selected, name: name, form: form_id, id_prefix: forloop.index %}
+                  {% when 'swatch' %}
+                    {% if value.swatch.image %}
+                      {% render 'option-value', type: 'swatch', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, id_prefix: forloop.index %}
+                    {% elsif value.swatch.color %}
+                      {% render 'option-value', type: 'swatch', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, id_prefix: forloop.index %}
+                    {% else %}
+                      {% render 'option-value', type: 'swatch', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index %}
+                    {% endif %}
+                  {% when 'block' %}
+                    {% render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index %}
+                  {% when 'block_swatch' %}
+                    {% if value.swatch.image %}
+                      {% render 'option-value', type: 'block', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index %}
+                    {% elsif value.swatch.color %}
+                      {% render 'option-value', type: 'block', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index %}
+                    {% else %}
+                      {% render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index %}
+                    {% endif %}
+                {% endcase %}
+              </div>
+            {% endfor %}
+          </div>
+
+          {%- capture container_id -%}size-container-{{ section.id }}-{{ option.position }}{%- endcapture -%}
+          
+          <div class="size-spoiler-container" style="margin-top: 8px;">
+            <button type="button" 
+                    class="size-spoiler-toggle" 
+                    onclick="toggleSizeSpoiler('{{ container_id }}')"
+                    style="background: none !important; border: none !important; padding: 8px 0 !important; cursor: pointer; width: 100%; text-align: left; font-size: 14px; display: flex; align-items: center; gap: 8px; color: #374151; font-family: inherit; box-shadow: none !important; border-radius: 0 !important;">
+              <svg class="spoiler-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="transition: transform 0.2s; flex-shrink: 0;">
+                <path d="M4 2L8 6L4 10" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="spoiler-text" style="font-weight: 500;">Show more sizes</span>
+            </button>
+          </div>
+
+        {%- elsif resolved_option_selector_style == 'dropdown' -%}
+          <div class="relative">
+            {%- capture popover_id -%}popover-variant-dropdown-{{ section.id }}-{{ product.id }}-{{ option.position }}{%- endcapture -%}
+
+            <button type="button" class="select" aria-controls="{{ popover_id }}" aria-expanded="false">
+              <span id="{{ popover_id }}-selected-value">{{- option.selected_value -}}</span>
+              {%- render 'icon' with 'dropdown-chevron' -%}
+            </button>
+            <x-popover id="{{ popover_id }}" class="popover popover--bottom-start color-scheme color-scheme--dialog" close-on-listbox-select initial-focus="[aria-selected='true']">
+              <p class="h5" slot="header">{{ option.name }}</p>
+              <x-listbox data-option-selector class="popover__value-list" aria-owns="{{ popover_id }}-selected-value">
+                <input type="hidden" id="{{ popover_id }}-input" name="option{{ option.position }}" form="{{ form_id }}" value="{{ option.selected_value | escape }}">
+
+                <input type="text" class="variant-search-input" placeholder="Search..." oninput="filterPopoverOptions(event, '{{ popover_id }}')">
+
+                {%- for value in option.values -%}
+                  <button type="button"
+                          class="h-stack justify-between gap-2 variant-option-button"
+                          role="option"
+                          value="{{ value | escape }}"
+                          title="{{ value | escape }}"
+                          aria-selected="{% if value == option.selected_value %}true{% else %}false{% endif %}"
+                          data-option-value>
+                    <span>{{- value -}}</span>
+                    <span class="variant-picker__dropdown-sold-out-label">{{- 'product.general.sold_out_badge' | t -}}</span>
+                  </button>
+                {%- endfor -%}
+                <p class="variant-no-results">
+                  No results found.
+                </p>
+              </x-listbox>
+            </x-popover>
+          </div>
+
+          {% if template == 'product.interior-swing-doors-instock' 
+           or template == 'product.interior-swing-doors-preorder' 
+           or template == 'product.interior-barn-doors-instock' 
+           or template == 'product.interior-barn-doors-preorder' %}
+            <div style="padding-bottom:12px;" class="prose">
+              <p>Looking for a different size or design? Build your <a href="https://alpadadoors.com/pages/pre-order" target="_blank">custom door</a>.</p>
+            </div>
+          {% endif %}
+
+        {%- else -%}
+          {%- liquid
+            case resolved_option_selector_style
+              when 'swatch' or 'variant_image' or 'block' or 'block_swatch'
+                assign list_classes = 'h-stack gap-4 wrap'
+              else
+                assign list_classes = ''
+            endcase
+          -%}
+
+          {%- comment -%} Regular option display {%- endcomment -%}
+          <div data-option-selector class="variant-picker__option-values {{ list_classes }}">
+            {% for value in option.values %}
+              {% assign selected = false %}
+              {% if is_size_option and forloop.first %}
+                {% assign selected = true %}
+              {% elsif value == option.selected_value and is_size_option == false %}
+                {% assign selected = true %}
+              {% endif %}
+              {% case resolved_option_selector_style %}
+                {% when 'variant_image' %}
+                  {% render 'option-value', type: 'thumbnail', value: value, image: value.variant.featured_media, selected: selected, name: name, form: form_id, id_prefix: forloop.index %}
+                {% when 'swatch' %}
+                  {% if value.swatch.image %}
+                    {% render 'option-value', type: 'swatch', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, id_prefix: forloop.index %}
+                  {% elsif value.swatch.color %}
+                    {% render 'option-value', type: 'swatch', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, id_prefix: forloop.index %}
+                  {% else %}
+                    {% render 'option-value', type: 'swatch', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index %}
+                  {% endif %}
+                {% when 'block' %}
+                  {% render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, id_prefix: forloop.index %}
+                {% when 'block_swatch' %}
+                  {% if value.swatch.image %}
+                    {% render 'option-value', type: 'block', value: value, image: value.swatch.image, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index %}
+                  {% elsif value.swatch.color %}
+                    {% render 'option-value', type: 'block', value: value, color: value.swatch.color, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index %}
+                  {% else %}
+                    {% render 'option-value', type: 'block', value: value, selected: selected, name: name, form: form_id, show_swatch: true, id_prefix: forloop.index %}
+                  {% endif %}
+              {% endcase %}
+            {% endfor %}
+          </div>
+        {%- endif -%}
+      </fieldset>
+    {%- endfor -%}
+
+    <script>
+      function toggleSizeSpoiler(containerId) {
+        const container = document.getElementById(containerId);
+        const button = container.parentElement.querySelector('.size-spoiler-toggle');
+        const icon = button.querySelector('.spoiler-icon');
+        const textSpan = button.querySelector('.spoiler-text');
+        const hiddenItems = container.querySelectorAll('.size-hidden-item');
+        
+        if (hiddenItems.length === 0) return;
+        
+        const isHidden = hiddenItems[0].style.display === 'none';
+        
+        if (isHidden) {
+          hiddenItems.forEach(item => item.style.display = 'block');
+          icon.style.transform = 'rotate(90deg)';
+          textSpan.textContent = 'Hide sizes';
+        } else {
+          hiddenItems.forEach(item => item.style.display = 'none');
+          icon.style.transform = 'rotate(0deg)';
+          textSpan.textContent = 'Show more sizes';
+        }
+      }
+
+      function filterPopoverOptions(event, popoverId) {
+        const query = event.target.value.toLowerCase().trim();
+        const popover = document.getElementById(popoverId);
+        if (!popover) return;
+        const options = popover.querySelectorAll('[data-option-value]');
+
+        let anyVisible = false;
+        options.forEach(option => {
+          const text = option.textContent.toLowerCase();
+          const visible = text.includes(query);
+          option.style.display = visible ? '' : 'none';
+          if (visible) anyVisible = true;
+        });
+
+        const noResults = popover.querySelector('.variant-no-results');
+        if (noResults) noResults.style.display = anyVisible ? 'none' : '';
+      }
+
+      document.addEventListener('click', (e) => {
+        const popovers = document.querySelectorAll('x-popover');
+        popovers.forEach(pop => {
+          if (!pop.contains(e.target)) {
+            const input = pop.querySelector('.variant-search-input');
+            if (input) input.value = '';
+            const options = pop.querySelectorAll('[data-option-value]');
+            options.forEach(opt => opt.style.display = '');
+            const noResults = pop.querySelector('.variant-no-results');
+            if (noResults) noResults.style.display = 'none';
+          }
+        });
+      });
+    </script>
+
+    <noscript>
+      {%- assign input_label = 'product.general.variant' | t -%}
+
+      {%- capture select_options -%}
+        {%- for variant in product.variants -%}
+          <option {% if variant == product.selected_or_first_available_variant %}selected="selected"{% endif %} {% unless variant.available %}disabled="disabled"{% endunless %} value="{{ variant.id }}">{{ variant.title }} - {{ variant.price | money }}</option>
+        {%- endfor -%}
+      {%- endcapture -%}
+
+      {%- render 'select', label: input_label, form: form_id, name: 'id', options: select_options -%}
+    </noscript>
+  </variant-picker>
+{%- else -%}
+  <noscript>
+    <input type="hidden" name="id" form="{{ form_id }}" value="{{ product.selected_or_first_available_variant.id }}">
+  </noscript>
+{%- endunless -%}

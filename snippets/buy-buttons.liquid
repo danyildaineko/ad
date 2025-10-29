@@ -1,0 +1,267 @@
+{%- comment -%}
+----------------------------------------------------------------------------------------------------------------------
+BUY BUTTONS
+----------------------------------------------------------------------------------------------------------------------
+
+This component is used to show the buy buttons
+
+********************************************
+Supported variables
+********************************************
+
+* product: the product from which to show the buttons (if empty, a placeholder is displayed)
+* show_payment_button: if we show or not the dynamic checkout button
+* show_gift_card_recipient: for gift card products, an optional message/email to be sent to the recipient
+* atc_button_background: the background of the ATC button
+* atc_button_text_color: the color of the ATC button
+* payment_button_background: the background of the dynamic payment button
+* payment_button_background: the color of the dynamic payment button
+* form_id: if specified, define the form ID linked to this input
+{%- endcomment -%}
+
+{%- if product != blank -%}
+  {%- assign variant_picker_block = section.blocks | where: 'type', 'variant_picker' | first -%}
+
+  {%- assign recipient_feature_active = false -%}
+
+  {%- if product.gift_card? and show_gift_card_recipient -%}
+    {%- assign recipient_feature_active = true -%}
+    {%- assign show_payment_button = false -%}
+  {%- endif -%}
+
+  {%- form 'product', product, is: 'product-form', id: form_id -%}
+    <input type="hidden" {% if variant_picker_block != blank %}disabled{% endif %} name="id" value="{{ product.selected_or_first_available_variant.id }}">
+
+    {% liquid
+      assign button_disabled = false
+
+      if product.selected_or_first_available_variant.available == false
+        assign button_disabled = true
+        assign button_content = 'product.general.sold_out_button' | t
+      else
+        if product.template_suffix contains 'pre-order'
+          assign button_content = 'product.general.pre_order_button' | t
+        else
+          assign button_content = 'product.general.add_to_cart_button' | t
+        endif
+      endif
+    %}
+
+    <div class="v-stack gap-4">
+      {%- if recipient_feature_active -%}
+        <gift-card-recipient class="gift-card-recipient v-stack gap-3">
+          {%- assign checkbox_label = 'gift_card.recipient.checkbox' | t -%}
+          {%- render 'checkbox', label: checkbox_label, name: 'properties[__shopify_send_gift_card_to_recipient]' -%}
+
+          <div class="gift-card-recipient__fields js:hidden">
+            <div class="fieldset">
+              {%- liquid
+                assign recipient_email_label = 'gift_card.recipient.email_label' | t
+                render 'input', type: 'email', label: recipient_email_label, name: 'properties[Recipient email]', value: form.email, required: true
+
+                assign recipient_name_label = 'gift_card.recipient.name_label' | t
+                render 'input', label: recipient_name_label, name: 'properties[Recipient name]', value: form.name
+
+                assign send_on_label = 'gift_card.recipient.send_on_label' | t
+                render 'input', type: 'date', label: send_on_label, name: 'properties[Send on]', value: form.send_on, pattern: '\d{4}-\d{2}-\d{2}'
+                render 'input', type: 'hidden', name: 'properties[__shopify_offset]'
+
+                assign message_label = 'gift_card.recipient.message_label' | t
+                render 'input', label: message_label, name: 'properties[Message]', value: form.message, multiline: 3, maxlength: 200, show_max_characters_count: true
+              -%}
+            </div>
+          </div>
+        </gift-card-recipient>
+      {%- endif -%}
+
+      <buy-buttons class="buy-buttons {% if show_payment_button %}buy-buttons--has-dynamic{% endif %}" template="{{ product.template_suffix | escape }}" form="{{ form_id }}">
+        {%- if show_payment_button and atc_button_background == blank and atc_button_text_color == blank -%}
+          {%- assign atc_button_style = 'outline' -%}
+        {%- else -%}
+          {%- assign atc_button_style = 'solid' -%}
+        {%- endif -%}
+
+        {%- render 'button', content: button_content, type: 'submit', disabled: button_disabled, style: atc_button_style, background: atc_button_background, text_color: atc_button_text_color, stretch: true -%}
+
+        {%- if show_payment_button -%}
+          {{- form | payment_button -}}
+
+          <style>
+            #shopify-section-{{ section.id }} .shopify-payment-button {
+              {%- if payment_button_background != blank and payment_button_background != 'rgba(0,0,0,0)' -%}
+                --button-background: {{ payment_button_background.rgb }};
+              {%- endif -%}
+
+              {%- if payment_button_text_color != blank and payment_button_text_color != 'rgba(0,0,0,0)' -%}
+                --button-text-color: {{ payment_button_text_color.rgb }};
+              {%- endif -%}
+
+              {%- unless product.selected_or_first_available_variant.available -%}
+                display: none;
+              {%- endunless -%}
+            }
+
+          </style>
+        {%- endif -%}
+      </buy-buttons>
+
+{%- comment -%}==================== SUBTOTAL DISPLAY (FINAL: handles cart-level discounts) ===================={%- endcomment -%}
+<div id="cart-subtotal-display-{{ product.id }}" class="cart-subtotal-display" style="display: none;">
+  <div class="cart-subtotal-display__inner">
+    <div class="cart-subtotal-display__row">
+      <span class="cart-subtotal-display__label">Subtotal</span>
+      <span id="cart-subtotal-amount-{{ product.id }}" class="cart-subtotal-display__amount">$0.00</span>
+    </div>
+
+    <div class="cart-subtotal-display__quantity">
+      <span id="cart-item-quantity-{{ product.id }}">1</span> item(s) in cart
+    </div>
+
+    <!-- Discount line — will be shown only when a discount that reduces price is detected -->
+    <div id="cart-subtotal-discount-{{ product.id }}" class="cart-subtotal-display__discount" style="display: none;">
+      <!-- text injected by script (NO ICON) -->
+    </div>
+  </div>
+</div>
+
+<style>
+  .cart-subtotal-display {
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    animation: subtotalSlideIn 0.22s ease-out;
+    position: relative;
+    width: 100%;
+    margin-top: 0;
+  }
+  .cart-subtotal-display__row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .cart-subtotal-display__label { font-weight:500; color:#374151; font-size:15px; }
+  .cart-subtotal-display__amount { font-weight:600; color:#2C4A52; font-size:17px; }
+  .cart-subtotal-display__compare-at { text-decoration:line-through; color:#9ca3af; font-weight:400; font-size:14px; margin-left:8px; }
+  .cart-subtotal-display__quantity { margin-top:8px; font-size:13px; color:#6b7280; }
+  .cart-subtotal-display__discount {
+    margin-top:10px; padding:8px 10px; background:#e7f9f0; border-radius:6px;
+    font-size:13px; font-weight:500; color:#064e3b; display:inline-flex; align-items:center;
+    gap:8px; max-width:100%; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  @keyframes subtotalSlideIn { from { opacity:0; transform:translateY(-6px) } to { opacity:1; transform:translateY(0) } }
+  @media (max-width:699px) { .cart-subtotal-display{padding:10px;} .cart-subtotal-display__label{font-size:14px;} .cart-subtotal-display__amount{font-size:15px;} .cart-subtotal-display__discount{font-size:12px; padding:7px 8px; gap:6px;} }
+</style>
+
+<script>
+(function() {
+  const PRODUCT_ID = {{ product.id }};
+  const DISPLAY_ID = 'cart-subtotal-display-' + PRODUCT_ID;
+  const AMOUNT_ID = 'cart-subtotal-amount-' + PRODUCT_ID;
+  const QTY_ID = 'cart-item-quantity-' + PRODUCT_ID;
+  const DISCOUNT_WRAPPER_ID = 'cart-subtotal-discount-' + PRODUCT_ID;
+
+  function safeNumber(v){ return Number(v || 0); }
+  function formatMoney(cents){ return '$' + (safeNumber(cents) / 100).toFixed(2); }
+
+  function updateCartSubtotal(){
+    fetch('/cart.js').then(r => r.json()).then(cart => {
+      try {
+        let totalFinal = 0;
+        let totalOriginal = 0;
+        let totalQty = 0;
+        let totalExplicitAllocations = 0;
+        let discountTitles = new Set();
+
+        if (Array.isArray(cart.items)) {
+          cart.items.forEach(item => {
+            if (item.product_id === PRODUCT_ID) {
+              const fin = safeNumber(item.final_line_price);
+              const orig = safeNumber(item.original_line_price);
+              const qty = safeNumber(item.quantity);
+
+              totalFinal += fin;
+              totalOriginal += orig;
+              totalQty += qty;
+
+              const allocations = item.line_level_discount_allocations || item.discount_allocations || [];
+              if (Array.isArray(allocations) && allocations.length) {
+                allocations.forEach(a => {
+                  const amt = safeNumber(a.amount);
+                  if (amt > 0) totalExplicitAllocations += amt;
+                  try {
+                    if (a && a.discount_application && a.discount_application.title) discountTitles.add(a.discount_application.title);
+                    else if (a && a.title) discountTitles.add(a.title);
+                    else if (a && a.code) discountTitles.add(a.code);
+                  } catch(e){}
+                });
+              }
+            }
+          });
+        }
+
+        // FIXED LOGIC: Show discount ONLY if this specific product has a discount
+        // Do NOT show discount from other products in cart
+        const impliedDiscount = Math.max(0, totalOriginal - totalFinal);
+        let totalDiscountForProduct = 0;
+
+        if (totalExplicitAllocations > 0) {
+          // Has explicit discount allocations
+          totalDiscountForProduct = totalExplicitAllocations;
+        } else if (impliedDiscount > 0) {
+          // Has implicit discount (original > final)
+          totalDiscountForProduct = impliedDiscount;
+        }
+        // Otherwise: no discount for this product
+
+        const displayEl = document.getElementById(DISPLAY_ID);
+        const amountEl = document.getElementById(AMOUNT_ID);
+        const qtyEl = document.getElementById(QTY_ID);
+        const discountWrapper = document.getElementById(DISCOUNT_WRAPPER_ID);
+        if (!displayEl || !amountEl || !qtyEl || !discountWrapper) return;
+
+        if (totalQty > 0) {
+          const hasDiscount = totalOriginal > totalFinal;
+          let priceHTML = formatMoney(totalFinal);
+          if (hasDiscount) {
+            priceHTML += ' <span class="cart-subtotal-display__compare-at">' + formatMoney(totalOriginal) + '</span>';
+          }
+          amountEl.innerHTML = priceHTML;
+          qtyEl.textContent = totalQty;
+
+          if (totalDiscountForProduct > 0) {
+            const title = discountTitles.size ? Array.from(discountTitles).join(', ') : 'Discount';
+            discountWrapper.textContent = title + ' (-' + formatMoney(totalDiscountForProduct) + ')';
+            discountWrapper.style.display = 'inline-flex';
+          } else {
+            discountWrapper.style.display = 'none';
+            discountWrapper.textContent = '';
+          }
+
+          displayEl.style.display = 'block';
+        } else {
+          displayEl.style.display = 'none';
+          discountWrapper.style.display = 'none';
+          discountWrapper.textContent = '';
+        }
+      } catch(err) {
+        console.error('updateCartSubtotal error', err);
+      }
+    }).catch(err => { console.error('Failed to fetch /cart.js', err); });
+  }
+
+  updateCartSubtotal();
+  document.addEventListener('variant:change', updateCartSubtotal);
+  document.addEventListener('cart:change', updateCartSubtotal);
+  document.addEventListener('cart:refresh', updateCartSubtotal);
+  const form = document.getElementById('{{ form_id }}');
+  if (form) form.addEventListener('submit', () => setTimeout(updateCartSubtotal, 600));
+  setInterval(updateCartSubtotal, 7000);
+})();
+</script>
+{%- comment -%}==================== END SUBTOTAL DISPLAY (FINAL) ===================={%- endcomment -%}
+
+    </div>
+  {%- endform -%}
+{%- else -%}
+  <buy-buttons class="buy-buttons" template="{{ product.template_suffix | escape }}" form="{{ form_id }}">
+    {%- assign button_content = 'product.general.add_to_cart_button' | t -%}
+    {%- render 'button', content: button_content, type: 'submit', background: variant_picker_block.settings.atc_button_background, text_color: variant_picker.settings.atc_button_text_color, stretch: true -%}
+  </buy-buttons>
+{%- endif -%}

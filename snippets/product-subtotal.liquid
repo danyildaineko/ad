@@ -1,0 +1,36 @@
+<div class="alpada-subtotal" style="margin:10px 0;">
+  <span>Subtotal: </span>
+  <span data-subtotal>—</span>
+</div>
+
+<script>
+(function(){
+  // беремо базову ціну з Liquid (в центах)
+  var BASE = {{ base_price | json }};
+
+  // шукаємо саме інпут кількості цієї форми
+  var qty = document.querySelector('input[name="quantity"][form="{{ form_id }}"]')
+         || document.querySelector('#ProductForm-{{ section.id }} input[name="quantity"]');
+
+  // subtotal елемент — попередній DIV перед цим <script>, локально
+  var out = (function(s){ 
+    var prev = s.previousElementSibling; 
+    return prev ? prev.querySelector('[data-subtotal]') : null;
+  })(document.currentScript);
+
+  if(!qty || !out || !BASE){ return; }
+
+  function fmt(c){ return (window.Shopify && Shopify.formatMoney) ? Shopify.formatMoney(c) : ('$' + (c/100).toFixed(2)); }
+  function update(){
+    var q = parseInt(qty.value, 10) || 1;
+    out.textContent = fmt(BASE * q);
+  }
+
+  ['input','change'].forEach(function(ev){ qty.addEventListener(ev, update); });
+  document.addEventListener('click', function(e){
+    if(e.target.closest('quantity-input') || e.target.closest('.quantity')) setTimeout(update, 0);
+  });
+
+  update();
+})();
+</script>
