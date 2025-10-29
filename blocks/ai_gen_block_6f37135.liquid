@@ -1,0 +1,826 @@
+{% doc %}
+  @prompt
+    Create a stylish ‘Our Projects’ page for a luxury steel & glass door brand.
+    Use a clean grid of large project photos with short descriptions and city names (e.g. New York Loft, Miami Villa).
+    Add a minimal intro paragraph about craftsmanship and custom installations.
+    Include smooth image hover effects and a contact CTA button at the bottom inviting visitors to request a custom project quote.
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-projects-section-{{ ai_gen_id }} {
+    padding: {{ block.settings.section_padding_top }}px 0 {{ block.settings.section_padding_bottom }}px;
+    background-color: {{ block.settings.background_color }};
+  }
+
+  .ai-projects-container-{{ ai_gen_id }} {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .ai-projects-intro-{{ ai_gen_id }} {
+    text-align: center;
+    margin-bottom: {{ block.settings.intro_spacing }}px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .ai-projects-title-{{ ai_gen_id }} {
+    font-family: {{ settings.heading_font.family }}, {{ settings.heading_font.fallback_families }};
+    font-weight: {{ settings.heading_font.weight }};
+    font-style: {{ settings.heading_font.style }};
+    color: {{ block.settings.heading_color }};
+    font-size: {{ block.settings.heading_size }}px;
+    margin: 0 0 {{ block.settings.title_spacing }}px;
+    text-transform: {{ settings.heading_text_transform }};
+    letter-spacing: {{ settings.heading_letter_spacing }}%;
+  }
+
+  .ai-projects-description-{{ ai_gen_id }} {
+    font-family: {{ settings.text_font.family }}, {{ settings.text_font.fallback_families }};
+    font-weight: {{ settings.text_font.weight }};
+    font-style: {{ settings.text_font.style }};
+    color: {{ block.settings.text_color }};
+    font-size: {{ block.settings.description_size }}px;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .ai-projects-grid-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: repeat({{ block.settings.columns_desktop }}, 1fr);
+    gap: {{ block.settings.grid_gap }}px;
+    margin-bottom: {{ block.settings.cta_spacing }}px;
+  }
+
+  .ai-project-card-{{ ai_gen_id }} {
+    position: relative;
+    overflow: hidden;
+    border-radius: {{ block.settings.card_border_radius }}px;
+    background-color: {{ block.settings.card_background }};
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .ai-project-card-{{ ai_gen_id }}:hover {
+    transform: translateY(-{{ block.settings.hover_lift }}px);
+    box-shadow: 0 {{ block.settings.hover_shadow }}px {{ block.settings.hover_shadow | times: 2 }}px rgba(0, 0, 0, 0.1);
+  }
+
+  .ai-project-image-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    aspect-ratio: {{ block.settings.image_aspect_ratio }};
+    overflow: hidden;
+  }
+
+  .ai-project-image-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .ai-project-card-{{ ai_gen_id }}:hover .ai-project-image-{{ ai_gen_id }} {
+    transform: scale({{ block.settings.image_zoom_scale }});
+  }
+
+  .ai-project-image-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ai-project-image-placeholder-{{ ai_gen_id }} svg {
+    width: 60%;
+    height: 60%;
+    opacity: 0.3;
+  }
+
+  .ai-project-overlay-{{ ai_gen_id }} {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.1) 50%,
+      rgba(0, 0, 0, {{ block.settings.overlay_opacity }}) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .ai-project-card-{{ ai_gen_id }}:hover .ai-project-overlay-{{ ai_gen_id }} {
+    opacity: 1;
+  }
+
+  .ai-project-content-{{ ai_gen_id }} {
+    padding: {{ block.settings.card_padding }}px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .ai-project-name-{{ ai_gen_id }} {
+    font-family: {{ settings.heading_font.family }}, {{ settings.heading_font.fallback_families }};
+    font-weight: {{ settings.heading_font.weight }};
+    font-style: {{ settings.heading_font.style }};
+    color: {{ block.settings.project_title_color }};
+    font-size: {{ block.settings.project_title_size }}px;
+    margin: 0 0 8px;
+    text-transform: {{ settings.heading_text_transform }};
+    letter-spacing: {{ settings.heading_letter_spacing }}%;
+  }
+
+  .ai-project-location-{{ ai_gen_id }} {
+    font-family: {{ settings.text_font.family }}, {{ settings.text_font.fallback_families }};
+    font-weight: {{ settings.text_font.weight }};
+    font-style: {{ settings.text_font.style }};
+    color: {{ block.settings.project_location_color }};
+    font-size: {{ block.settings.project_location_size }}px;
+    margin: 0;
+    opacity: 0.8;
+  }
+
+  .ai-projects-cta-{{ ai_gen_id }} {
+    text-align: center;
+    margin-top: {{ block.settings.cta_spacing }}px;
+  }
+
+  .ai-projects-cta-button-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: {{ block.settings.button_padding_vertical }}px {{ block.settings.button_padding_horizontal }}px;
+    background-color: {{ block.settings.button_background }};
+    color: {{ block.settings.button_text_color }};
+    text-decoration: none;
+    border-radius: {{ settings.button_border_radius }}px;
+    font-family: {% if settings.button_text_font == 'heading' %}{{ settings.heading_font.family }}, {{ settings.heading_font.fallback_families }}{% else %}{{ settings.text_font.family }}, {{ settings.text_font.fallback_families }}{% endif %};
+    font-weight: {% if settings.button_text_font == 'heading' %}{{ settings.heading_font.weight }}{% else %}{{ settings.text_font.weight }}{% endif %};
+    font-style: {% if settings.button_text_font == 'heading' %}{{ settings.heading_font.style }}{% else %}{{ settings.text_font.style }}{% endif %};
+    font-size: {{ block.settings.button_font_size }}px;
+    text-transform: {{ settings.button_text_transform }};
+    letter-spacing: {{ settings.button_letter_spacing }}%;
+    transition: all 0.3s ease;
+    border: 2px solid {{ block.settings.button_background }};
+  }
+
+  .ai-projects-cta-button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_background }};
+    color: {{ block.settings.button_hover_text_color }};
+    border-color: {{ block.settings.button_hover_background }};
+    transform: translateY(-2px);
+  }
+
+  @media screen and (max-width: 1024px) {
+    .ai-projects-grid-{{ ai_gen_id }} {
+      grid-template-columns: repeat({{ block.settings.columns_tablet }}, 1fr);
+      gap: {{ block.settings.grid_gap | times: 0.8 }}px;
+    }
+
+    .ai-projects-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.heading_size | times: 0.9 }}px;
+    }
+
+    .ai-project-content-{{ ai_gen_id }} {
+      padding: {{ block.settings.card_padding | times: 0.8 }}px;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .ai-projects-grid-{{ ai_gen_id }} {
+      grid-template-columns: repeat({{ block.settings.columns_mobile }}, 1fr);
+      gap: {{ block.settings.grid_gap | times: 0.6 }}px;
+    }
+
+    .ai-projects-title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.heading_size | times: 0.8 }}px;
+    }
+
+    .ai-projects-description-{{ ai_gen_id }} {
+      font-size: {{ block.settings.description_size | times: 0.9 }}px;
+    }
+
+    .ai-project-name-{{ ai_gen_id }} {
+      font-size: {{ block.settings.project_title_size | times: 0.9 }}px;
+    }
+
+    .ai-project-location-{{ ai_gen_id }} {
+      font-size: {{ block.settings.project_location_size | times: 0.9 }}px;
+    }
+
+    .ai-projects-cta-button-{{ ai_gen_id }} {
+      padding: {{ block.settings.button_padding_vertical | times: 0.8 }}px {{ block.settings.button_padding_horizontal | times: 0.8 }}px;
+      font-size: {{ block.settings.button_font_size | times: 0.9 }}px;
+    }
+  }
+{% endstyle %}
+
+<div class="ai-projects-section-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-projects-container-{{ ai_gen_id }}">
+    <div class="ai-projects-intro-{{ ai_gen_id }}">
+      {% if block.settings.heading != blank %}
+        <h2 class="ai-projects-title-{{ ai_gen_id }}">{{ block.settings.heading }}</h2>
+      {% endif %}
+      
+      {% if block.settings.description != blank %}
+        <div class="ai-projects-description-{{ ai_gen_id }}">{{ block.settings.description }}</div>
+      {% endif %}
+    </div>
+
+    <div class="ai-projects-grid-{{ ai_gen_id }}">
+      {% for i in (1..6) %}
+        {% liquid
+          assign project_enabled_key = 'project_' | append: i | append: '_enabled'
+          assign project_image_key = 'project_' | append: i | append: '_image'
+          assign project_name_key = 'project_' | append: i | append: '_name'
+          assign project_location_key = 'project_' | append: i | append: '_location'
+
+          assign project_enabled = block.settings[project_enabled_key]
+          assign project_image = block.settings[project_image_key]
+          assign project_name = block.settings[project_name_key]
+          assign project_location = block.settings[project_location_key]
+        %}
+
+        {% if project_enabled %}
+          <div class="ai-project-card-{{ ai_gen_id }}">
+            <div class="ai-project-image-wrapper-{{ ai_gen_id }}">
+              {% if project_image %}
+                <img
+                  src="{{ project_image | image_url: width: 800 }}"
+                  alt="{{ project_image.alt | escape }}"
+                  class="ai-project-image-{{ ai_gen_id }}"
+                  loading="lazy"
+                  width="{{ project_image.width }}"
+                  height="{{ project_image.height }}"
+                >
+              {% else %}
+                <div class="ai-project-image-placeholder-{{ ai_gen_id }}">
+                  {{ 'image' | placeholder_svg_tag }}
+                </div>
+              {% endif %}
+              <div class="ai-project-overlay-{{ ai_gen_id }}"></div>
+            </div>
+            
+            <div class="ai-project-content-{{ ai_gen_id }}">
+              {% if project_name != blank %}
+                <h3 class="ai-project-name-{{ ai_gen_id }}">{{ project_name }}</h3>
+              {% endif %}
+              
+              {% if project_location != blank %}
+                <p class="ai-project-location-{{ ai_gen_id }}">{{ project_location }}</p>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if block.settings.show_cta and block.settings.cta_text != blank %}
+      <div class="ai-projects-cta-{{ ai_gen_id }}">
+        <a 
+          href="{{ block.settings.cta_link }}" 
+          class="ai-projects-cta-button-{{ ai_gen_id }}"
+        >
+          {{ block.settings.cta_text }}
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Our Projects",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Our Projects"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description",
+      "default": "<p>Each project showcases our commitment to exceptional craftsmanship and custom installations. From luxury residential spaces to commercial environments, we create bespoke steel and glass doors that define architectural excellence.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "columns_desktop",
+      "label": "Columns on desktop",
+      "options": [
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" }
+      ],
+      "default": "3"
+    },
+    {
+      "type": "select",
+      "id": "columns_tablet",
+      "label": "Columns on tablet",
+      "options": [
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Columns on mobile",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" }
+      ],
+      "default": "1"
+    },
+    {
+      "type": "select",
+      "id": "image_aspect_ratio",
+      "label": "Image aspect ratio",
+      "options": [
+        { "value": "4/3", "label": "4:3" },
+        { "value": "3/2", "label": "3:2" },
+        { "value": "16/9", "label": "16:9" },
+        { "value": "1/1", "label": "Square" },
+        { "value": "3/4", "label": "3:4 (Portrait)" }
+      ],
+      "default": "4/3"
+    },
+    {
+      "type": "range",
+      "id": "grid_gap",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "label": "Grid gap",
+      "default": 30
+    },
+    {
+      "type": "header",
+      "content": "Project 1"
+    },
+    {
+      "type": "checkbox",
+      "id": "project_1_enabled",
+      "label": "Enable project 1",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "project_1_image",
+      "label": "Project image"
+    },
+    {
+      "type": "text",
+      "id": "project_1_name",
+      "label": "Project name",
+      "default": "Manhattan Penthouse"
+    },
+    {
+      "type": "text",
+      "id": "project_1_location",
+      "label": "Location",
+      "default": "New York, NY"
+    },
+    {
+      "type": "header",
+      "content": "Project 2"
+    },
+    {
+      "type": "checkbox",
+      "id": "project_2_enabled",
+      "label": "Enable project 2",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "project_2_image",
+      "label": "Project image"
+    },
+    {
+      "type": "text",
+      "id": "project_2_name",
+      "label": "Project name",
+      "default": "Modern Villa"
+    },
+    {
+      "type": "text",
+      "id": "project_2_location",
+      "label": "Location",
+      "default": "Miami, FL"
+    },
+    {
+      "type": "header",
+      "content": "Project 3"
+    },
+    {
+      "type": "checkbox",
+      "id": "project_3_enabled",
+      "label": "Enable project 3",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "project_3_image",
+      "label": "Project image"
+    },
+    {
+      "type": "text",
+      "id": "project_3_name",
+      "label": "Project name",
+      "default": "Contemporary Loft"
+    },
+    {
+      "type": "text",
+      "id": "project_3_location",
+      "label": "Location",
+      "default": "Los Angeles, CA"
+    },
+    {
+      "type": "header",
+      "content": "Project 4"
+    },
+    {
+      "type": "checkbox",
+      "id": "project_4_enabled",
+      "label": "Enable project 4",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "project_4_image",
+      "label": "Project image"
+    },
+    {
+      "type": "text",
+      "id": "project_4_name",
+      "label": "Project name",
+      "default": "Urban Residence"
+    },
+    {
+      "type": "text",
+      "id": "project_4_location",
+      "label": "Location",
+      "default": "Chicago, IL"
+    },
+    {
+      "type": "header",
+      "content": "Project 5"
+    },
+    {
+      "type": "checkbox",
+      "id": "project_5_enabled",
+      "label": "Enable project 5",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "project_5_image",
+      "label": "Project image"
+    },
+    {
+      "type": "text",
+      "id": "project_5_name",
+      "label": "Project name",
+      "default": "Luxury Estate"
+    },
+    {
+      "type": "text",
+      "id": "project_5_location",
+      "label": "Location",
+      "default": "Beverly Hills, CA"
+    },
+    {
+      "type": "header",
+      "content": "Project 6"
+    },
+    {
+      "type": "checkbox",
+      "id": "project_6_enabled",
+      "label": "Enable project 6",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "project_6_image",
+      "label": "Project image"
+    },
+    {
+      "type": "text",
+      "id": "project_6_name",
+      "label": "Project name",
+      "default": "Coastal Home"
+    },
+    {
+      "type": "text",
+      "id": "project_6_location",
+      "label": "Location",
+      "default": "Malibu, CA"
+    },
+    {
+      "type": "header",
+      "content": "Call to action"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cta",
+      "label": "Show call to action",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "Button text",
+      "default": "Request Custom Quote"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#1c1c1c"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1c1c1c"
+    },
+    {
+      "type": "color",
+      "id": "project_title_color",
+      "label": "Project title color",
+      "default": "#1c1c1c"
+    },
+    {
+      "type": "color",
+      "id": "project_location_color",
+      "label": "Project location color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Button style"
+    },
+    {
+      "type": "color",
+      "id": "button_background",
+      "label": "Background",
+      "default": "#2c4a52"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_background",
+      "label": "Hover background",
+      "default": "#1c1c1c"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_text_color",
+      "label": "Hover text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Hover effects"
+    },
+    {
+      "type": "range",
+      "id": "hover_lift",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Card lift on hover",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "hover_shadow",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "label": "Shadow on hover",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "image_zoom_scale",
+      "min": 1.0,
+      "max": 1.2,
+      "step": 0.1,
+      "label": "Image zoom scale",
+      "default": 1.1
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "min": 0.0,
+      "max": 0.8,
+      "step": 0.1,
+      "label": "Overlay opacity",
+      "default": 0.3
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "intro_spacing",
+      "min": 20,
+      "max": 100,
+      "step": 10,
+      "unit": "px",
+      "label": "Intro bottom spacing",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "title_spacing",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "label": "Title bottom spacing",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "cta_spacing",
+      "min": 40,
+      "max": 120,
+      "step": 10,
+      "unit": "px",
+      "label": "CTA top spacing",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "card_padding",
+      "min": 15,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "label": "Card content padding",
+      "default": 25
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 24,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "Heading size",
+      "default": 42
+    },
+    {
+      "type": "range",
+      "id": "description_size",
+      "min": 14,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Description size",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "project_title_size",
+      "min": 16,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "Project title size",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "project_location_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Project location size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "button_font_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Button font size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "button_padding_vertical",
+      "min": 8,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Button vertical padding",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "button_padding_horizontal",
+      "min": 16,
+      "max": 48,
+      "step": 4,
+      "unit": "px",
+      "label": "Button horizontal padding",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "card_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Card border radius",
+      "default": 8
+    }
+  ],
+  "presets": [
+    {
+      "name": "Our Projects"
+    }
+  ]
+}
+{% endschema %}

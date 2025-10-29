@@ -1,0 +1,680 @@
+{% doc %}
+  @prompt
+    GET FREE QUTE  layout
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-free-quote-{{ ai_gen_id }} {
+    padding: {{ block.settings.padding_top }}px {{ block.settings.padding_horizontal }}px {{ block.settings.padding_bottom }}px;
+    background-color: {{ block.settings.background_color }};
+    text-align: {{ block.settings.text_alignment }};
+    border-radius: {{ block.settings.border_radius }}px;
+  }
+
+  .ai-free-quote-container-{{ ai_gen_id }} {
+    max-width: {{ block.settings.max_width }}px;
+    margin: 0 auto;
+  }
+
+  .ai-free-quote-heading-{{ ai_gen_id }} {
+    font-family: {{ settings.heading_font.family }}, {{ settings.heading_font.fallback_families }};
+    font-weight: {{ settings.heading_font.weight }};
+    font-style: {{ settings.heading_font.style }};
+    color: {{ block.settings.heading_color }};
+    font-size: {{ block.settings.heading_size }}px;
+    text-transform: {{ settings.heading_text_transform }};
+    letter-spacing: {{ settings.heading_letter_spacing }}%;
+    margin: 0 0 {{ block.settings.spacing_between_elements }}px;
+    line-height: 1.2;
+  }
+
+  .ai-free-quote-subheading-{{ ai_gen_id }} {
+    font-family: {{ settings.text_font.family }}, {{ settings.text_font.fallback_families }};
+    font-weight: {{ settings.text_font.weight }};
+    font-style: {{ settings.text_font.style }};
+    color: {{ block.settings.text_color }};
+    font-size: {{ block.settings.subheading_size }}px;
+    margin: 0 0 {{ block.settings.spacing_between_elements }}px;
+    line-height: 1.4;
+  }
+
+  .ai-free-quote-form-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: {{ block.settings.form_layout }};
+    gap: {{ block.settings.form_gap }}px;
+    align-items: {{ block.settings.form_alignment }};
+    justify-content: {{ block.settings.text_alignment }};
+    margin-top: {{ block.settings.spacing_between_elements }}px;
+  }
+
+  .ai-free-quote-input-group-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: {{ block.settings.form_layout }};
+    gap: {{ block.settings.form_gap }}px;
+    flex-grow: 1;
+  }
+
+  .ai-free-quote-input-{{ ai_gen_id }} {
+    flex-grow: 1;
+    padding: {{ block.settings.input_padding }}px;
+    border: {{ block.settings.input_border_width }}px solid {{ block.settings.input_border_color }};
+    border-radius: {{ settings.input_border_radius }}px;
+    background-color: {{ block.settings.input_background_color }};
+    color: {{ block.settings.input_text_color }};
+    font-family: {{ settings.text_font.family }}, {{ settings.text_font.fallback_families }};
+    font-size: {{ settings.text_font_size_desktop }}px;
+    min-width: 200px;
+  }
+
+  .ai-free-quote-input-{{ ai_gen_id }}::placeholder {
+    color: {{ block.settings.input_placeholder_color }};
+    opacity: 0.7;
+  }
+
+  .ai-free-quote-input-{{ ai_gen_id }}:focus {
+    outline: 2px solid {{ block.settings.button_background_color }};
+    outline-offset: 2px;
+    border-color: {{ block.settings.button_background_color }};
+  }
+
+  .ai-free-quote-button-{{ ai_gen_id }} {
+    padding: {{ block.settings.input_padding }}px {{ block.settings.button_padding_horizontal }}px;
+    background-color: {{ block.settings.button_background_color }};
+    color: {{ block.settings.button_text_color }};
+    border: none;
+    border-radius: {{ settings.button_border_radius }}px;
+    font-family: {% if settings.button_text_font == 'heading' %}{{ settings.heading_font.family }}, {{ settings.heading_font.fallback_families }}{% else %}{{ settings.text_font.family }}, {{ settings.text_font.fallback_families }}{% endif %};
+    font-weight: {% if settings.button_text_font == 'heading' %}{{ settings.heading_font.weight }}{% else %}{{ settings.text_font.weight }}{% endif %};
+    font-size: {{ settings.text_font_size_desktop }}px;
+    text-transform: {{ settings.button_text_transform }};
+    letter-spacing: {{ settings.button_letter_spacing }}%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
+    min-width: fit-content;
+  }
+
+  .ai-free-quote-button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_color }};
+  }
+
+  .ai-free-quote-features-{{ ai_gen_id }} {
+    display: flex;
+    flex-wrap: wrap;
+    gap: {{ block.settings.features_gap }}px;
+    justify-content: {{ block.settings.text_alignment }};
+    margin-top: {{ block.settings.spacing_between_elements }}px;
+  }
+
+  .ai-free-quote-feature-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: {{ settings.text_font.family }}, {{ settings.text_font.fallback_families }};
+    font-size: {{ block.settings.feature_text_size }}px;
+    color: {{ block.settings.feature_text_color }};
+  }
+
+  .ai-free-quote-feature-icon-{{ ai_gen_id }} {
+    width: {{ block.settings.feature_icon_size }}px;
+    height: {{ block.settings.feature_icon_size }}px;
+    color: {{ block.settings.feature_icon_color }};
+    flex-shrink: 0;
+  }
+
+  .ai-free-quote-success-{{ ai_gen_id }} {
+    color: {{ settings.success_color }};
+    margin-top: 12px;
+    font-family: {{ settings.text_font.family }}, {{ settings.text_font.fallback_families }};
+    font-size: {{ settings.text_font_size_desktop }}px;
+  }
+
+  .ai-free-quote-error-{{ ai_gen_id }} {
+    color: {{ settings.error_color }};
+    margin-top: 12px;
+    font-family: {{ settings.text_font.family }}, {{ settings.text_font.fallback_families }};
+    font-size: {{ settings.text_font_size_desktop }}px;
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-free-quote-{{ ai_gen_id }} {
+      padding: {{ block.settings.padding_top | times: 0.7 | round }}px {{ block.settings.padding_horizontal | times: 0.7 | round }}px {{ block.settings.padding_bottom | times: 0.7 | round }}px;
+    }
+
+    .ai-free-quote-heading-{{ ai_gen_id }} {
+      font-size: {{ block.settings.heading_size | times: 0.8 | round }}px;
+    }
+
+    .ai-free-quote-subheading-{{ ai_gen_id }} {
+      font-size: {{ block.settings.subheading_size | times: 0.9 | round }}px;
+    }
+
+    .ai-free-quote-form-{{ ai_gen_id }} {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .ai-free-quote-input-group-{{ ai_gen_id }} {
+      flex-direction: column;
+    }
+
+    .ai-free-quote-input-{{ ai_gen_id }},
+    .ai-free-quote-button-{{ ai_gen_id }} {
+      font-size: {{ settings.text_font_size_mobile }}px;
+      min-width: auto;
+    }
+
+    .ai-free-quote-features-{{ ai_gen_id }} {
+      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+{% endstyle %}
+
+<div class="ai-free-quote-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-free-quote-container-{{ ai_gen_id }}">
+    {% if block.settings.heading != blank %}
+      <h2 class="ai-free-quote-heading-{{ ai_gen_id }}">{{ block.settings.heading }}</h2>
+    {% endif %}
+
+    {% if block.settings.subheading != blank %}
+      <div class="ai-free-quote-subheading-{{ ai_gen_id }}">{{ block.settings.subheading }}</div>
+    {% endif %}
+
+    {% form 'contact' %}
+      <input type="hidden" name="contact[quote_request]" value="true">
+      
+      <div class="ai-free-quote-form-{{ ai_gen_id }}">
+        <div class="ai-free-quote-input-group-{{ ai_gen_id }}">
+          {% if block.settings.show_name_field %}
+            <input
+              type="text"
+              name="contact[name]"
+              class="ai-free-quote-input-{{ ai_gen_id }}"
+              placeholder="{{ block.settings.name_placeholder }}"
+              value="{{ form.name }}"
+              required
+            >
+          {% endif %}
+
+          <input
+            type="email"
+            name="contact[email]"
+            class="ai-free-quote-input-{{ ai_gen_id }}"
+            placeholder="{{ block.settings.email_placeholder }}"
+            value="{{ form.email }}"
+            aria-required="true"
+            autocorrect="off"
+            autocapitalize="off"
+            autocomplete="email"
+            {% if form.errors %}
+              aria-invalid="true"
+              aria-describedby="ai-free-quote-error-{{ ai_gen_id }}"
+            {% endif %}
+            {% if form.posted_successfully? %}
+              aria-describedby="ai-free-quote-success-{{ ai_gen_id }}"
+            {% endif %}
+            required
+          >
+
+          {% if block.settings.show_phone_field %}
+            <input
+              type="tel"
+              name="contact[phone]"
+              class="ai-free-quote-input-{{ ai_gen_id }}"
+              placeholder="{{ block.settings.phone_placeholder }}"
+              value="{{ form.phone }}"
+              autocomplete="tel"
+            >
+          {% endif %}
+        </div>
+
+        <button type="submit" class="ai-free-quote-button-{{ ai_gen_id }}">
+          {{ block.settings.button_text }}
+        </button>
+      </div>
+
+      {% if form.errors %}
+        <div id="ai-free-quote-error-{{ ai_gen_id }}" class="ai-free-quote-error-{{ ai_gen_id }}">
+          {{ form.errors.messages.email }}
+        </div>
+      {% endif %}
+
+      {% if form.posted_successfully? %}
+        <div id="ai-free-quote-success-{{ ai_gen_id }}" class="ai-free-quote-success-{{ ai_gen_id }}">
+          {{ block.settings.success_message }}
+        </div>
+      {% endif %}
+    {% endform %}
+
+    {% if block.settings.show_features %}
+      <div class="ai-free-quote-features-{{ ai_gen_id }}">
+        {% if block.settings.feature_1_text != blank %}
+          <div class="ai-free-quote-feature-{{ ai_gen_id }}">
+            <svg class="ai-free-quote-feature-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20,6 9,17 4,12"></polyline>
+            </svg>
+            <span>{{ block.settings.feature_1_text }}</span>
+          </div>
+        {% endif %}
+
+        {% if block.settings.feature_2_text != blank %}
+          <div class="ai-free-quote-feature-{{ ai_gen_id }}">
+            <svg class="ai-free-quote-feature-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20,6 9,17 4,12"></polyline>
+            </svg>
+            <span>{{ block.settings.feature_2_text }}</span>
+          </div>
+        {% endif %}
+
+        {% if block.settings.feature_3_text != blank %}
+          <div class="ai-free-quote-feature-{{ ai_gen_id }}">
+            <svg class="ai-free-quote-feature-icon-{{ ai_gen_id }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20,6 9,17 4,12"></polyline>
+            </svg>
+            <span>{{ block.settings.feature_3_text }}</span>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Get free quote",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "GET FREE QUOTE"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Get a personalized quote for your project. No obligation, fast response."
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button text",
+      "default": "Get Quote"
+    },
+    {
+      "type": "text",
+      "id": "success_message",
+      "label": "Success message",
+      "default": "Thank you! We'll get back to you with a quote within 24 hours."
+    },
+    {
+      "type": "header",
+      "content": "Form fields"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_name_field",
+      "label": "Show name field",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "name_placeholder",
+      "label": "Name placeholder",
+      "default": "Your name"
+    },
+    {
+      "type": "text",
+      "id": "email_placeholder",
+      "label": "Email placeholder",
+      "default": "Your email"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_phone_field",
+      "label": "Show phone field",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "phone_placeholder",
+      "label": "Phone placeholder",
+      "default": "Your phone (optional)"
+    },
+    {
+      "type": "header",
+      "content": "Features"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_features",
+      "label": "Show features",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "feature_1_text",
+      "label": "Feature 1",
+      "default": "Free consultation"
+    },
+    {
+      "type": "text",
+      "id": "feature_2_text",
+      "label": "Feature 2",
+      "default": "24-hour response"
+    },
+    {
+      "type": "text",
+      "id": "feature_3_text",
+      "label": "Feature 3",
+      "default": "No obligation"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "text_alignment",
+      "label": "Text alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "select",
+      "id": "form_layout",
+      "label": "Form layout",
+      "options": [
+        {
+          "value": "row",
+          "label": "Horizontal"
+        },
+        {
+          "value": "column",
+          "label": "Vertical"
+        }
+      ],
+      "default": "row"
+    },
+    {
+      "type": "select",
+      "id": "form_alignment",
+      "label": "Form alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "Top"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "flex-end",
+          "label": "Bottom"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "min": 400,
+      "max": 1200,
+      "step": 50,
+      "unit": "px",
+      "label": "Maximum width",
+      "default": 800
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#f8f9fa"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#1c1c1c"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "button_background_color",
+      "label": "Button background color",
+      "default": "#2c4a52"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_color",
+      "label": "Button hover color",
+      "default": "#1e3238"
+    },
+    {
+      "type": "color",
+      "id": "input_background_color",
+      "label": "Input background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "input_text_color",
+      "label": "Input text color",
+      "default": "#1c1c1c"
+    },
+    {
+      "type": "color",
+      "id": "input_border_color",
+      "label": "Input border color",
+      "default": "#e0e0e0"
+    },
+    {
+      "type": "color",
+      "id": "input_placeholder_color",
+      "label": "Input placeholder color",
+      "default": "#999999"
+    },
+    {
+      "type": "color",
+      "id": "feature_text_color",
+      "label": "Feature text color",
+      "default": "#666666"
+    },
+    {
+      "type": "color",
+      "id": "feature_icon_color",
+      "label": "Feature icon color",
+      "default": "#2c4a52"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 20,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "Heading size",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "subheading_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Subheading size",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "feature_text_size",
+      "min": 12,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "label": "Feature text size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "feature_icon_size",
+      "min": 12,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Feature icon size",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Top padding",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Bottom padding",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "padding_horizontal",
+      "min": 10,
+      "max": 80,
+      "step": 5,
+      "unit": "px",
+      "label": "Horizontal padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "spacing_between_elements",
+      "min": 10,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Spacing between elements",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "form_gap",
+      "min": 8,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Form gap",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "features_gap",
+      "min": 16,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "label": "Features gap",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "input_padding",
+      "min": 8,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Input padding",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "button_padding_horizontal",
+      "min": 16,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "label": "Button horizontal padding",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Border radius",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "input_border_width",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "unit": "px",
+      "label": "Input border width",
+      "default": 1
+    }
+  ],
+  "presets": [
+    {
+      "name": "Get free quote"
+    }
+  ]
+}
+{% endschema %}
