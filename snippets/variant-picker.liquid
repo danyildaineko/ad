@@ -29,14 +29,10 @@ Supported variables
 {% assign has_featured  = false %}
 {% if featured_ids.size > 0 %}{% assign has_featured = true %}{% endif %}
 
-{% assign featured_variants = '' | split: ',' %}
 {% if has_featured %}
-  {% for v in product.variants %}
-    {% if featured_ids contains v.id %}{% assign featured_variants = featured_variants | push: v %}{% endif %}
-  {% endfor %}
-  {% assign allowed_opt1 = featured_variants | map: 'option1' | uniq %}
-  {% assign allowed_opt2 = featured_variants | map: 'option2' | uniq %}
-  {% assign allowed_opt3 = featured_variants | map: 'option3' | uniq %}
+  {% assign allowed_opt1 = featured_refs | map: 'option1' | uniq %}
+  {% assign allowed_opt2 = featured_refs | map: 'option2' | uniq %}
+  {% assign allowed_opt3 = featured_refs | map: 'option3' | uniq %}
 {% endif %}
 
 {%- unless product.has_only_default_variant or hide_sold_out_variants and product.available == false -%}
