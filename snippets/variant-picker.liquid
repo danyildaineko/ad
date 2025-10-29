@@ -33,37 +33,6 @@ Supported variables
   {% assign allowed_sizes = featured_variants | map: 'option1' | uniq %}
 {% endif %}
 
-<!-- DEBUG INFO (remove after testing) -->
-<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 11px; max-height: 400px; overflow: auto;">
-  <strong>DEBUG:</strong><br>
-  has_featured: {{ has_featured }}<br>
-  featured_variants.size: {{ featured_variants.size }}<br>
-  featured_ids: [{{ featured_ids | join: ', ' }}]<br>
-  featured_ids.size: {{ featured_ids.size }}<br>
-  <br>
-  <strong>allowed_sizes array:</strong><br>
-  allowed_sizes.size: {{ allowed_sizes.size }}<br>
-  {% for size in allowed_sizes %}
-    [{{ forloop.index }}] = "{{ size }}" (length: {{ size | size }})<br>
-  {% endfor %}
-  <br>
-  <strong>Featured variants details:</strong><br>
-  {% for variant in featured_variants %}
-    - ID: {{ variant.id }}<br>
-    &nbsp;&nbsp;option1: "{{ variant.option1 }}" (length: {{ variant.option1 | size }})<br>
-    &nbsp;&nbsp;title: "{{ variant.title }}"<br>
-  {% endfor %}
-  <br>
-  <strong>All option values from product:</strong><br>
-  {% for option in product.options_with_values %}
-    Option {{ option.position }} ({{ option.name }}):<br>
-    {% for value in option.values %}
-      &nbsp;&nbsp;[{{ forloop.index }}] "{{ value }}" (length: {{ value | size }})<br>
-    {% endfor %}
-  {% endfor %}
-</div>
-<!-- END DEBUG -->
-
 {%- unless product.has_only_default_variant or hide_sold_out_variants and product.available == false -%}
   <variant-picker class="variant-picker v-stack gap-4" handle="{{ product.handle }}" form="{{ form_id }}" {% if update_url %}update-url{% endif %} {% if hide_sold_out_variants %}hide-sold-out-variants{% endif %}>
     {%- for option in product.options_with_values -%}
@@ -171,7 +140,6 @@ Supported variables
           -%}
 
           <div data-option-selector class="variant-picker__option-values {{ list_classes }}">
-            <!-- DEBUG: Showing option position {{ option.position }}, has_featured: {{ has_featured }} -->
             {% liquid
               assign name = 'option' | append: option.position
 
@@ -197,10 +165,6 @@ Supported variables
                 if value == option.selected_value
                   assign selected = true
                 endif
-
-                echo '<div style="font-size:9px;color:red;">Showing: '
-                echo value
-                echo '</div>'
 
                 case resolved_option_selector_style
                   when 'variant_image'
