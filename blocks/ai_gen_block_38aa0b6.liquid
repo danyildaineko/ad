@@ -1,0 +1,550 @@
+{% doc %}
+  @prompt
+    Call back feature
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-callback-form-{{ ai_gen_id }} {
+    padding: {{ block.settings.padding }}px;
+    background-color: {{ block.settings.background_color }};
+    border-radius: {{ block.settings.border_radius }}px;
+    max-width: {{ block.settings.max_width }}px;
+    margin: 0 auto;
+  }
+
+  .ai-callback-form__content-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .ai-callback-form__header-{{ ai_gen_id }} {
+    text-align: {{ block.settings.text_alignment }};
+  }
+
+  .ai-callback-form__title-{{ ai_gen_id }} {
+    color: {{ block.settings.text_color }};
+    margin: 0 0 8px;
+    font-size: {{ block.settings.title_size }}px;
+    font-weight: 600;
+  }
+
+  .ai-callback-form__subtitle-{{ ai_gen_id }} {
+    color: {{ block.settings.text_color }};
+    margin: 0;
+    font-size: {{ block.settings.subtitle_size }}px;
+    opacity: 0.8;
+  }
+
+  .ai-callback-form__fields-{{ ai_gen_id }} {
+    display: grid;
+    gap: 16px;
+  }
+
+  .ai-callback-form__field-group-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ai-callback-form__label-{{ ai_gen_id }} {
+    color: {{ block.settings.text_color }};
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .ai-callback-form__input-{{ ai_gen_id }},
+  .ai-callback-form__textarea-{{ ai_gen_id }},
+  .ai-callback-form__select-{{ ai_gen_id }} {
+    padding: 12px 16px;
+    border: 1px solid {{ block.settings.input_border_color }};
+    border-radius: {{ block.settings.input_border_radius }}px;
+    background-color: {{ block.settings.input_background_color }};
+    color: {{ block.settings.input_text_color }};
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+  }
+
+  .ai-callback-form__input-{{ ai_gen_id }}:focus,
+  .ai-callback-form__textarea-{{ ai_gen_id }}:focus,
+  .ai-callback-form__select-{{ ai_gen_id }}:focus {
+    outline: none;
+    border-color: {{ block.settings.input_focus_border_color }};
+  }
+
+  .ai-callback-form__textarea-{{ ai_gen_id }} {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  .ai-callback-form__row-{{ ai_gen_id }} {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .ai-callback-form__button-{{ ai_gen_id }} {
+    padding: 14px 28px;
+    background-color: {{ block.settings.button_color }};
+    color: {{ block.settings.button_text_color }};
+    border: none;
+    border-radius: {{ block.settings.button_border_radius }}px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .ai-callback-form__button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_color }};
+  }
+
+  .ai-callback-form__success-{{ ai_gen_id }} {
+    color: {{ block.settings.success_color }};
+    background-color: {{ block.settings.success_background_color }};
+    padding: 12px 16px;
+    border-radius: {{ block.settings.input_border_radius }}px;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .ai-callback-form__error-{{ ai_gen_id }} {
+    color: {{ block.settings.error_color }};
+    background-color: {{ block.settings.error_background_color }};
+    padding: 12px 16px;
+    border-radius: {{ block.settings.input_border_radius }}px;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .ai-callback-form__required-{{ ai_gen_id }} {
+    color: {{ block.settings.error_color }};
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-callback-form__row-{{ ai_gen_id }} {
+      grid-template-columns: 1fr;
+    }
+
+    .ai-callback-form-{{ ai_gen_id }} {
+      padding: {{ block.settings.padding | times: 0.7 }}px;
+    }
+
+    .ai-callback-form__title-{{ ai_gen_id }} {
+      font-size: {{ block.settings.title_size | times: 0.9 }}px;
+    }
+  }
+{% endstyle %}
+
+<div
+  class="ai-callback-form-{{ ai_gen_id }}"
+  {{ block.shopify_attributes }}
+>
+  {%- form 'contact' -%}
+    <input type="hidden" name="contact[callback_request]" value="true">
+    
+    <div class="ai-callback-form__content-{{ ai_gen_id }}">
+      <div class="ai-callback-form__header-{{ ai_gen_id }}">
+        {%- if block.settings.title != blank -%}
+          <h2 class="ai-callback-form__title-{{ ai_gen_id }}">{{ block.settings.title }}</h2>
+        {%- endif -%}
+        
+        {%- if block.settings.subtitle != blank -%}
+          <p class="ai-callback-form__subtitle-{{ ai_gen_id }}">{{ block.settings.subtitle }}</p>
+        {%- endif -%}
+      </div>
+
+      {%- if form.posted_successfully? -%}
+        <div class="ai-callback-form__success-{{ ai_gen_id }}">
+          {{ block.settings.success_message }}
+        </div>
+      {%- else -%}
+        <div class="ai-callback-form__fields-{{ ai_gen_id }}">
+          <div class="ai-callback-form__row-{{ ai_gen_id }}">
+            <div class="ai-callback-form__field-group-{{ ai_gen_id }}">
+              <label class="ai-callback-form__label-{{ ai_gen_id }}" for="callback-name-{{ ai_gen_id }}">
+                Name <span class="ai-callback-form__required-{{ ai_gen_id }}">*</span>
+              </label>
+              <input
+                type="text"
+                id="callback-name-{{ ai_gen_id }}"
+                name="contact[name]"
+                class="ai-callback-form__input-{{ ai_gen_id }}"
+                value="{{ form.name }}"
+                required
+                {% if form.errors contains 'name' %}
+                  aria-invalid="true"
+                  aria-describedby="callback-name-error-{{ ai_gen_id }}"
+                {% endif %}
+              >
+              {%- if form.errors contains 'name' -%}
+                <div id="callback-name-error-{{ ai_gen_id }}" class="ai-callback-form__error-{{ ai_gen_id }}">
+                  {{ form.errors.messages.name }}
+                </div>
+              {%- endif -%}
+            </div>
+
+            <div class="ai-callback-form__field-group-{{ ai_gen_id }}">
+              <label class="ai-callback-form__label-{{ ai_gen_id }}" for="callback-email-{{ ai_gen_id }}">
+                Email <span class="ai-callback-form__required-{{ ai_gen_id }}">*</span>
+              </label>
+              <input
+                type="email"
+                id="callback-email-{{ ai_gen_id }}"
+                name="contact[email]"
+                class="ai-callback-form__input-{{ ai_gen_id }}"
+                value="{{ form.email }}"
+                required
+                autocomplete="email"
+                {% if form.errors contains 'email' %}
+                  aria-invalid="true"
+                  aria-describedby="callback-email-error-{{ ai_gen_id }}"
+                {% endif %}
+              >
+              {%- if form.errors contains 'email' -%}
+                <div id="callback-email-error-{{ ai_gen_id }}" class="ai-callback-form__error-{{ ai_gen_id }}">
+                  {{ form.errors.messages.email }}
+                </div>
+              {%- endif -%}
+            </div>
+          </div>
+
+          <div class="ai-callback-form__row-{{ ai_gen_id }}">
+            <div class="ai-callback-form__field-group-{{ ai_gen_id }}">
+              <label class="ai-callback-form__label-{{ ai_gen_id }}" for="callback-phone-{{ ai_gen_id }}">
+                Phone Number <span class="ai-callback-form__required-{{ ai_gen_id }}">*</span>
+              </label>
+              <input
+                type="tel"
+                id="callback-phone-{{ ai_gen_id }}"
+                name="contact[phone]"
+                class="ai-callback-form__input-{{ ai_gen_id }}"
+                value="{{ form.phone }}"
+                required
+                autocomplete="tel"
+                {% if form.errors contains 'phone' %}
+                  aria-invalid="true"
+                  aria-describedby="callback-phone-error-{{ ai_gen_id }}"
+                {% endif %}
+              >
+              {%- if form.errors contains 'phone' -%}
+                <div id="callback-phone-error-{{ ai_gen_id }}" class="ai-callback-form__error-{{ ai_gen_id }}">
+                  {{ form.errors.messages.phone }}
+                </div>
+              {%- endif -%}
+            </div>
+
+            <div class="ai-callback-form__field-group-{{ ai_gen_id }}">
+              <label class="ai-callback-form__label-{{ ai_gen_id }}" for="callback-time-{{ ai_gen_id }}">
+                Preferred Call Time
+              </label>
+              <select
+                id="callback-time-{{ ai_gen_id }}"
+                name="contact[preferred_time]"
+                class="ai-callback-form__select-{{ ai_gen_id }}"
+              >
+                <option value="">Select a time</option>
+                <option value="morning" {% if form.preferred_time == 'morning' %}selected{% endif %}>Morning (9 AM - 12 PM)</option>
+                <option value="afternoon" {% if form.preferred_time == 'afternoon' %}selected{% endif %}>Afternoon (12 PM - 5 PM)</option>
+                <option value="evening" {% if form.preferred_time == 'evening' %}selected{% endif %}>Evening (5 PM - 8 PM)</option>
+                <option value="anytime" {% if form.preferred_time == 'anytime' %}selected{% endif %}>Anytime</option>
+              </select>
+            </div>
+          </div>
+
+          {%- if block.settings.show_subject_field -%}
+            <div class="ai-callback-form__field-group-{{ ai_gen_id }}">
+              <label class="ai-callback-form__label-{{ ai_gen_id }}" for="callback-subject-{{ ai_gen_id }}">
+                Subject
+              </label>
+              <input
+                type="text"
+                id="callback-subject-{{ ai_gen_id }}"
+                name="contact[subject]"
+                class="ai-callback-form__input-{{ ai_gen_id }}"
+                value="{{ form.subject }}"
+                placeholder="{{ block.settings.subject_placeholder }}"
+              >
+            </div>
+          {%- endif -%}
+
+          <div class="ai-callback-form__field-group-{{ ai_gen_id }}">
+            <label class="ai-callback-form__label-{{ ai_gen_id }}" for="callback-message-{{ ai_gen_id }}">
+              Message
+            </label>
+            <textarea
+              id="callback-message-{{ ai_gen_id }}"
+              name="contact[body]"
+              class="ai-callback-form__textarea-{{ ai_gen_id }}"
+              placeholder="{{ block.settings.message_placeholder }}"
+            >{{ form.body }}</textarea>
+          </div>
+
+          <button
+            type="submit"
+            class="ai-callback-form__button-{{ ai_gen_id }}"
+          >
+            {{ block.settings.button_text }}
+          </button>
+        </div>
+      {%- endif -%}
+
+      {%- if form.errors and form.errors.size > 0 and form.posted_successfully? == false -%}
+        <div class="ai-callback-form__error-{{ ai_gen_id }}">
+          Please correct the errors above and try again.
+        </div>
+      {%- endif -%}
+    </div>
+  {%- endform -%}
+</div>
+
+{% schema %}
+{
+  "name": "Call back request",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Request a Call Back"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Fill out the form below and we'll call you back within 24 hours"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button text",
+      "default": "Request Call Back"
+    },
+    {
+      "type": "text",
+      "id": "success_message",
+      "label": "Success message",
+      "default": "Thank you! We'll call you back within 24 hours."
+    },
+    {
+      "type": "header",
+      "content": "Form fields"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_subject_field",
+      "label": "Show subject field",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "subject_placeholder",
+      "label": "Subject placeholder",
+      "default": "What can we help you with?"
+    },
+    {
+      "type": "text",
+      "id": "message_placeholder",
+      "label": "Message placeholder",
+      "default": "Tell us more about your inquiry..."
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "text_alignment",
+      "label": "Text alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "min": 400,
+      "max": 800,
+      "step": 20,
+      "unit": "px",
+      "label": "Maximum width",
+      "default": 600
+    },
+    {
+      "type": "range",
+      "id": "padding",
+      "min": 20,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Border radius",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "label": "Title size",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "subtitle_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Subtitle size",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#f8f9fa"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#1c1c1c"
+    },
+    {
+      "type": "color",
+      "id": "input_background_color",
+      "label": "Input background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "input_text_color",
+      "label": "Input text color",
+      "default": "#1c1c1c"
+    },
+    {
+      "type": "color",
+      "id": "input_border_color",
+      "label": "Input border color",
+      "default": "#d1d5db"
+    },
+    {
+      "type": "color",
+      "id": "input_focus_border_color",
+      "label": "Input focus border color",
+      "default": "#2c4a52"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button color",
+      "default": "#2c4a52"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_color",
+      "label": "Button hover color",
+      "default": "#1e3238"
+    },
+    {
+      "type": "color",
+      "id": "success_color",
+      "label": "Success text color",
+      "default": "#307a07"
+    },
+    {
+      "type": "color",
+      "id": "success_background_color",
+      "label": "Success background color",
+      "default": "#f0f9e8"
+    },
+    {
+      "type": "color",
+      "id": "error_color",
+      "label": "Error text color",
+      "default": "#cb2b2b"
+    },
+    {
+      "type": "color",
+      "id": "error_background_color",
+      "label": "Error background color",
+      "default": "#fef2f2"
+    },
+    {
+      "type": "header",
+      "content": "Input styling"
+    },
+    {
+      "type": "range",
+      "id": "input_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Input border radius",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Button border radius",
+      "default": 4
+    }
+  ],
+  "presets": [
+    {
+      "name": "Call back request"
+    }
+  ]
+}
+{% endschema %}
