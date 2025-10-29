@@ -7,7 +7,7 @@ PRODUCT INFO - with disclaimer at the bottom
 {%- capture product_form_id -%}product-form-{{ product.id }}-{{ section.id }}{%- endcapture -%}
 
 {% comment %} Use first featured variant as current, fallback to default {% endcomment %}
-{% assign current_variant = product.metafields.custom.featured_variants.references | first
+{% assign current_variant = product.metafields.custom.featured_variants.value | first
                             | default: product.selected_or_first_available_variant %}
 
 <safe-sticky class="product-info {% if center_basic_info %}product-info--center{% endif %}">

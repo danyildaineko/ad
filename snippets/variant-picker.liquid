@@ -24,42 +24,28 @@ Supported variables
 {%- assign variant_image_options = variant_image_options | replace: ', ', ',' | downcase | split: ',' -%}
 
 {% comment %} Featured variants helpers {% endcomment %}
-{% assign metafield_test = product.metafields.custom.featured_variants %}
-{% assign featured_refs = product.metafields.custom.featured_variants.references %}
-{% assign featured_value = product.metafields.custom.featured_variants.value %}
-{% assign featured_ids  = featured_refs | map: 'id' %}
-{% assign has_featured  = false %}
+{% assign featured_variants = product.metafields.custom.featured_variants.value %}
+{% assign featured_ids = featured_variants | map: 'id' %}
+{% assign has_featured = false %}
 {% if featured_ids.size > 0 %}{% assign has_featured = true %}{% endif %}
 
 {% if has_featured %}
-  {% assign allowed_sizes = featured_refs | map: 'option1' | uniq %}
+  {% assign allowed_sizes = featured_variants | map: 'option1' | uniq %}
 {% endif %}
 
 <!-- DEBUG INFO (remove after testing) -->
-<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 11px; max-height: 300px; overflow: auto;">
-  <strong>DEBUG - Metafield Investigation:</strong><br>
-  <hr>
-  <strong>1. Raw metafield:</strong><br>
-  metafield_test exists: {{ metafield_test | default: 'NO' }}<br>
-  metafield_test.type: {{ metafield_test.type }}<br>
-  <hr>
-  <strong>2. References approach:</strong><br>
-  featured_refs: {{ featured_refs }}<br>
-  featured_refs.size: {{ featured_refs.size }}<br>
-  featured_ids.size: {{ featured_ids.size }}<br>
-  <hr>
-  <strong>3. Value approach:</strong><br>
-  featured_value: {{ featured_value }}<br>
-  featured_value.size: {{ featured_value.size }}<br>
-  <hr>
-  <strong>4. Results:</strong><br>
+<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 11px;">
+  <strong>DEBUG:</strong><br>
   has_featured: {{ has_featured }}<br>
+  featured_variants.size: {{ featured_variants.size }}<br>
+  featured_ids: {{ featured_ids | join: ', ' }}<br>
+  featured_ids.size: {{ featured_ids.size }}<br>
   allowed_sizes: {{ allowed_sizes | join: ', ' }}<br>
   allowed_sizes.size: {{ allowed_sizes.size }}<br>
-  <hr>
-  <strong>5. All product metafields:</strong><br>
-  {% for metafield in product.metafields.custom %}
-    - {{ metafield[0] }}: {{ metafield[1].type }}<br>
+  <br>
+  <strong>Featured variants details:</strong><br>
+  {% for variant in featured_variants %}
+    - ID: {{ variant.id }}, option1: "{{ variant.option1 }}", title: "{{ variant.title }}"<br>
   {% endfor %}
 </div>
 <!-- END DEBUG -->
@@ -250,7 +236,7 @@ Supported variables
       {%- assign input_label = 'product.general.variant' | t -%}
 
       {%- capture select_options -%}
-        {% assign current = product.metafields.custom.featured_variants.references | first
+        {% assign current = product.metafields.custom.featured_variants.value | first
                             | default: product.selected_or_first_available_variant %}
 
         {% for variant in product.variants %}
